@@ -1,0 +1,110 @@
+
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ENT-GIS | ENDIAMA EP</title>
+    <style>
+        * { box-sizing: border-box; }
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: #f1f5f9;
+            color: #172033;
+        }
+        header {
+            background: #102b46;
+            color: white;
+            padding: 25px 6%;
+        }
+        header h1 { margin: 0; font-size: 27px; }
+        header p { color: #cbd5e1; margin-bottom: 0; }
+        main { padding: 35px 6%; }
+        .welcome {
+            background: white;
+            padding: 28px;
+            border-radius: 12px;
+            margin-bottom: 25px;
+        }
+        .cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+            gap: 18px;
+        }
+        .card {
+            background: white;
+            padding: 25px;
+            border-radius: 12px;
+            border-left: 5px solid #16835d;
+        }
+        .number { font-size: 32px; font-weight: bold; }
+        .card p { color: #64748b; }
+        .actions { margin-top: 28px; }
+        .actions a {
+            display: inline-block;
+            background: #16835d;
+            color: white;
+            text-decoration: none;
+            padding: 13px 20px;
+            border-radius: 7px;
+            margin: 5px 8px 5px 0;
+        }
+        footer {
+            padding: 25px 6%;
+            color: #64748b;
+            font-size: 13px;
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <h1>ENT-GIS</h1>
+    <p>ENDIAMA NATIONAL TAILINGS GIS</p>
+    <p>Sistema Nacional de Informação e Gestão de Barragens de Rejeitados</p>
+</header>
+
+<main>
+    <section class="welcome">
+        <h2>Portal Nacional de Gestão de Rejeitados</h2>
+        <p>
+            Plataforma de cadastro, informação geoespacial,
+            monitorização de segurança e gestão de conformidade
+            das instalações de rejeitados em Angola.
+        </p>
+    </section>
+
+    <section class="cards">
+        <div class="card">
+            <div class="number">{{ company_count }}</div>
+            <h3>Sociedades Mineiras</h3>
+            <p>Sociedades registadas na plataforma</p>
+        </div>
+
+        <div class="card">
+            <div class="number">{{ facility_count }}</div>
+            <h3>Instalações de Rejeitados</h3>
+            <p>Instalações cadastradas</p>
+        </div>
+
+        <div class="card">
+            <div class="number">{{ simulated_count }}</div>
+            <h3>Registos Simulados</h3>
+            <p>Dados de demonstração identificados</p>
+        </div>
+    </section>
+
+    <section class="actions">
+        <h2>Acesso aos módulos</h2>
+        <a href="/admin/">Painel Administrativo</a>
+          <a href="/mapa/">Mapa Nacional de Barragens</a>
+    </section>
+</main>
+
+<footer>
+    ENDIAMA EP | ENT-GIS | Ambiente de desenvolvimento
+</footer>
+
+</body>
+</html>

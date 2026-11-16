@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ENT-GIS | Mapa Nacional</title>
+
+    <link
+    href="https://unpkg.com/maplibre-gl@5.6.1/dist/maplibre-gl.css"
+    rel="stylesheet"
+/>
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: #f1f5f9;
+            color: #172033;
+        }
+
+        header {
+            background: #102b46;
+            color: white;
+            padding: 22px 5%;
+        }
+
+        header h1 {
+            margin: 0 0 8px;
+        }
+
+        header p {
+            margin: 0;
+            color: #cbd5e1;
+        }
+
+        main {
+            padding: 25px 5%;
+        }
+
+        .toolbar, .information {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 18px;
+        }
+
+        .filters {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            align-items: end;
+        }
+
+        .field {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            min-width: 210px;
+        }
+
+        select, button {
+            padding: 11px;
+            border: 1px solid #cbd5e1;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+
+        button {
+            background: #16835d;
+            color: white;
+            border: 0;
+            cursor: pointer;
+        }
+
+        .back {
+            color: white;
+            text-decoration: none;
+            display: inline-block;
+            margin-top: 15px;
+        }
+
+        #map {
+            width: 100%;
+            height: 580px;
+            border-radius: 10px;
+            border: 1px solid #cbd5e1;
+            z-index: 1;
+        }
+
+        .notice {
+            padding: 13px;
+            background: #fff7e6;
+            border-left: 4px solid #d99a24;
+            border-radius: 5px;
+            margin-bottom: 15px;
+        }
+
+        .simulated {
+            color: #9a5b00;
+            font-weight: bold;
+        }
+
+        footer {
+            padding: 22px 5%;
+            color: #64748b;
+            font-size: 13px;
+        }
+    </style>
+</head>
+
+<body>
+
+<header>
+    <h1>ENT-GIS | Mapa Nacional</h1>
+    <p>ENDIAMA NATIONAL TAILINGS GIS</p>
+    <p>Sistema Nacional de Informação Geográfica de Instalações de Rejeitados</p>
+    <a class="back" href="/">← Voltar ao portal principal</a>
+</header>
+
+<main>
+
+    <section class="information">
+        <h2>Inventário Geográfico Nacional</h2>
+        <p>
+            Instalações georreferenciadas:
+            <strong>{{ facility_count }}</strong>
+        </p>
+        <p>
+            Os marcadores representam apenas instalações com coordenadas
+            geográficas registadas e válidas.
+        </p>
+    </section>
+
+    <section class="toolbar">
+        <h3>Filtrar instalações</h3>
+
+        <form method="get" class="filters">
+
+            <div class="field">
+                <label for="province">Província</label>
+                <select name="province" id="province">
+                    <option value="">Todas as províncias</option>
+                    {% for province in provinces %}
+                        <option value="{{ province }}"
+                            {% if selected_province == province %}selected{% endif %}>
+                            {{ province }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="field">
+                <label for="company">Sociedade mineira</label>
+                <select name="company" id="company">
+                    <option value="">Todas as sociedades</option>
+                    {% for company in companies %}
+                        <option value="{{ company.id }}"
+                            {% if selected_company == company.id|stringformat:"s" %}selected{% endif %}>
+                            {{ company.name }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <button type="submit">Aplicar filtros</button>
+            <a href="/mapa/">Limpar filtros</a>
+
+        </form>
+    </section>
+
+    {% if facility_count == 0 %}
+        <div class="notice">
+            <strong>Sem instalações georreferenciadas para os filtros actuais.</strong>
+            O mapa apresenta a área de Angola como referência cartográfica.
+            Registe coordenadas válidas no painel administrativo para visualizar
+            os marcadores. Não são utilizadas coordenadas fictícias.
+        </div>
+    {% endif %}
+
+    <div id="map"></div>
+
+</main>
+
+<footer>
+    ENDIAMA EP | ENT-GIS | Ambiente de desenvolvimento |
+    Dados de demonstração identificados como simulados.
+</footer>
+
+{{ map_data|json_script:"facility-data" }}
+
+<script src="https://unpkg.com/maplibre-gl@5.6.1/dist/maplibre-gl.js"></script>
+
+<script>
+
+const facilities = JSON.parse(
+    document.getElementById("facility-data").textContent
+);
+
+// Centro geográfico aproximado de Angola.
+// MapLibre utiliza [longitude, latitude].
+const map = new maplibregl.Map({
+    container: "map",
+    style: "https://tiles.openfreemap.org/styles/positron",
+    center: [18.5, -12.5],
+    zoom: 4.5,
+    attributionControl: true
+});
+
+map.addControl(
+    new maplibregl.NavigationControl(),
+    "top-right"
+);
+
+map.on("load", function () {
+
+    const bounds = new maplibregl.LngLatBounds();
+
+    facilities.forEach(function (facility) {
+
+        const content = document.createElement("div");
+
+        function addLine(label, value) {
+            const line = document.createElement("p");
+            const strong = document.createElement("strong");
+
+            strong.textContent = label + ": ";
+            line.appendChild(strong);
+
+            line.appendChild(
+                document.createTextNode(
+                    value === null || value === undefined || value === ""
+                        ? "Não informado"
+                        : String(value)
+                )
+            );
+
+            content.appendChild(line);
+        }
+
+        const title = document.createElement("h3");
+        title.textContent = facility.name;
+        content.appendChild(title);
+
+        addLine("Sociedade mineira", facility.company);
+        addLine("Província", facility.province);
+        addLine("Município", facility.municipality);
+
+        addLine(
+            "Altura",
+            facility.height_m === null
+                ? null
+                : facility.height_m + " m"
+        );
+
+        addLine(
+            "Capacidade",
+            facility.capacity_m3 === null
+                ? null
+                : facility.capacity_m3 + " m³"
+        );
+
+        addLine("Classe de consequência", facility.consequence_class);
+        addLine("Estado operacional", facility.operational_status);
+
+        if (facility.is_simulated) {
+            const simulated = document.createElement("p");
+            simulated.textContent = "REGISTO SIMULADO";
+            simulated.className = "simulated";
+            content.appendChild(simulated);
+        }
+
+        const coordinates = [
+            facility.longitude,
+            facility.latitude
+        ];
+
+        new maplibregl.Marker()
+            .setLngLat(coordinates)
+            .setPopup(
+                new maplibregl.Popup().setDOMContent(content)
+            )
+            .addTo(map);
+
+        bounds.extend(coordinates);
+    });
+
+    if (facilities.length > 0) {
+        map.fitBounds(bounds, {
+            padding: 40,
+            maxZoom: 10
+        });
+    }
+});
+</script>
+</body>
+</html>
