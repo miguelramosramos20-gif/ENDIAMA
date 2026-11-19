@@ -1,110 +1,429 @@
-
+{% load static %}
 <!DOCTYPE html>
 <html lang="pt">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ENT-GIS | ENDIAMA EP</title>
+    <meta name="theme-color" content="#103d2b">
+    <meta name="description" content="Portal Nacional de Registo, Monitorização e Gestão de Barragens de Rejeitados e Estruturas de Retorno de Águas em Angola.">
+    <link rel="icon" type="image/svg+xml" href="{% static 'facilities/favicon.svg' %}">
+    <title>ENDIAMA | National Tailings GIS</title>
+
     <style>
+        :root {
+            --green: #103d2b;
+            --green-dark: #0a2c20;
+            --green-mid: #19543b;
+            --green-card: #1b6042;
+            --green-hover: #26734f;
+            --white: #ffffff;
+            --white-soft: #e3eee7;
+            --white-muted: #b9d0c1;
+            --border: rgba(255,255,255,.15);
+        }
+
         * { box-sizing: border-box; }
+
+        html { scroll-behavior: smooth; }
+
         body {
             margin: 0;
-            font-family: Arial, sans-serif;
-            background: #f1f5f9;
-            color: #172033;
+            font-family: Inter, "Segoe UI", Arial, sans-serif;
+            background: var(--green);
+            color: var(--white);
         }
-        header {
-            background: #102b46;
-            color: white;
-            padding: 25px 6%;
+
+        a { color: inherit; text-decoration: none; }
+
+        .topbar {
+            min-height: 78px;
+            padding: 15px 6%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 20px;
+            border-bottom: 1px solid var(--border);
+            background: var(--green-dark);
         }
-        header h1 { margin: 0; font-size: 27px; }
-        header p { color: #cbd5e1; margin-bottom: 0; }
-        main { padding: 35px 6%; }
-        .welcome {
-            background: white;
-            padding: 28px;
-            border-radius: 12px;
-            margin-bottom: 25px;
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 13px;
         }
-        .cards {
+
+        .brand-mark {
+            width: 46px;
+            height: 46px;
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
-            gap: 18px;
+            place-items: center;
+            border: 1px solid rgba(255,255,255,.65);
+            border-radius: 10px;
+            font-size: 23px;
+            font-weight: 800;
         }
-        .card {
-            background: white;
-            padding: 25px;
-            border-radius: 12px;
-            border-left: 5px solid #16835d;
+
+        .brand-name {
+            font-size: 19px;
+            font-weight: 800;
+            letter-spacing: 1.5px;
         }
-        .number { font-size: 32px; font-weight: bold; }
-        .card p { color: #64748b; }
-        .actions { margin-top: 28px; }
-        .actions a {
-            display: inline-block;
-            background: #16835d;
-            color: white;
-            text-decoration: none;
-            padding: 13px 20px;
+
+        .brand-subtitle {
+            display: block;
+            margin-top: 4px;
+            color: var(--white-muted);
+            font-size: 9px;
+            letter-spacing: 1.4px;
+        }
+
+        .top-link {
+            border: 1px solid rgba(255,255,255,.5);
             border-radius: 7px;
-            margin: 5px 8px 5px 0;
+            padding: 10px 16px;
+            font-size: 12px;
+            font-weight: 700;
+            transition: .2s;
         }
-        footer {
-            padding: 25px 6%;
-            color: #64748b;
+
+        .top-link:hover {
+            background: white;
+            color: var(--green-dark);
+        }
+
+        .container {
+            width: min(1180px, 90%);
+            margin: auto;
+        }
+
+        .hero {
+            padding: 76px 0 55px;
+            max-width: 920px;
+        }
+
+        .eyebrow {
+            color: #a9d5b9;
+            font-size: 11px;
+            font-weight: 800;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+        }
+
+        .hero h1 {
+            max-width: 850px;
+            margin: 17px 0;
+            font-size: clamp(32px, 5vw, 54px);
+            line-height: 1.12;
+            letter-spacing: -1.5px;
+        }
+
+        .hero p {
+            max-width: 820px;
+            color: var(--white-soft);
+            font-size: 16px;
+            line-height: 1.85;
+        }
+
+        .section {
+            padding: 35px 0;
+            border-top: 1px solid var(--border);
+        }
+
+        .section-title {
+            margin: 0 0 9px;
+            font-size: 23px;
+        }
+
+        .section-intro {
+            margin: 0 0 23px;
+            color: var(--white-muted);
             font-size: 13px;
+            line-height: 1.7;
+        }
+
+        .institution-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0,1fr));
+            gap: 16px;
+        }
+
+        .institution-card {
+            padding: 23px;
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            background: var(--green-mid);
+        }
+
+        .institution-card h3 {
+            margin: 0 0 10px;
+            font-size: 16px;
+        }
+
+        .institution-card p {
+            margin: 0;
+            color: var(--white-soft);
+            font-size: 13px;
+            line-height: 1.8;
+        }
+
+        .objectives {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0,1fr));
+            gap: 12px;
+            padding: 0;
+            list-style: none;
+        }
+
+        .objectives li {
+            padding: 15px 17px;
+            background: var(--green-mid);
+            border-left: 3px solid #a9d5b9;
+            border-radius: 5px;
+            color: var(--white-soft);
+            font-size: 13px;
+            line-height: 1.6;
+        }
+
+        .menu-grid {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0,1fr));
+            gap: 14px;
+        }
+
+        .menu-card {
+            min-height: 125px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: 19px;
+            background: var(--green-card);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            transition: .2s ease;
+        }
+
+        .menu-card:hover {
+            background: var(--green-hover);
+            transform: translateY(-3px);
+            border-color: rgba(255,255,255,.5);
+        }
+
+        .menu-icon {
+            font-size: 23px;
+        }
+
+        .menu-card strong {
+            display: block;
+            margin-top: 15px;
+            font-size: 13px;
+        }
+
+        .menu-card small {
+            display: block;
+            margin-top: 5px;
+            color: var(--white-muted);
+            font-size: 10px;
+            line-height: 1.5;
+        }
+
+        .footer {
+            margin-top: 45px;
+            padding: 25px 5%;
+            border-top: 1px solid var(--border);
+            background: var(--green-dark);
+            color: var(--white-muted);
+            text-align: center;
+            font-size: 11px;
+            line-height: 1.8;
+        }
+
+        @media (max-width: 850px) {
+            .menu-grid { grid-template-columns: repeat(2, minmax(0,1fr)); }
+        }
+
+        @media (max-width: 600px) {
+            .topbar { padding: 14px 5%; }
+            .brand-name { font-size: 16px; }
+            .brand-subtitle { font-size: 8px; }
+            .top-link { padding: 9px 10px; font-size: 10px; }
+            .hero { padding: 55px 0 38px; }
+            .hero p { font-size: 14px; }
+            .institution-grid, .objectives { grid-template-columns: 1fr; }
+            .menu-grid { grid-template-columns: 1fr 1fr; gap: 9px; }
+            .menu-card { min-height: 115px; padding: 13px; }
         }
     </style>
 </head>
-<body>
 
-<header>
-    <h1>ENT-GIS</h1>
-    <p>ENDIAMA NATIONAL TAILINGS GIS</p>
-    <p>Sistema Nacional de Informação e Gestão de Barragens de Rejeitados</p>
+<body>
+<header class="topbar">
+    <a class="brand" href="/">
+        <div class="brand-mark">E</div>
+        <div>
+            <div class="brand-name">ENDIAMA</div>
+            <span class="brand-subtitle">NATIONAL TAILINGS GIS</span>
+        </div>
+    </a>
+
+    <a class="top-link" href="/admin/">ACESSO AO SISTEMA →</a>
 </header>
 
-<main>
-    <section class="welcome">
-        <h2>Portal Nacional de Gestão de Rejeitados</h2>
+<main class="container">
+    <section class="hero">
+        <div class="eyebrow">Plataforma nacional · República de Angola</div>
+        <h1>Gestão Nacional de Barragens de Rejeitados e Retorno de Águas</h1>
         <p>
-            Plataforma de cadastro, informação geoespacial,
-            monitorização de segurança e gestão de conformidade
-            das instalações de rejeitados em Angola.
+            Uma plataforma integrada para o registo, acompanhamento,
+            supervisão e gestão do ciclo de vida das instalações de
+            armazenamento de rejeitados e das estruturas de retorno de
+            águas das empresas mineiras em Angola.
         </p>
     </section>
 
-    <section class="cards">
-        <div class="card">
-            <div class="number">{{ company_count }}</div>
-            <h3>Sociedades Mineiras</h3>
-            <p>Sociedades registadas na plataforma</p>
-        </div>
+    <section class="section">
+        <h2 class="section-title">Identidade institucional</h2>
+        <p class="section-intro">
+            Princípios que orientam a finalidade e a utilização do ENT-GIS.
+        </p>
 
-        <div class="card">
-            <div class="number">{{ facility_count }}</div>
-            <h3>Instalações de Rejeitados</h3>
-            <p>Instalações cadastradas</p>
-        </div>
+        <div class="institution-grid">
+            <article class="institution-card">
+                <h3>Missão</h3>
+                <p>
+                    Promover o registo e a supervisão integrada das
+                    instalações de armazenamento de rejeitados e retorno
+                    de águas, através de informação organizada, monitorização
+                    sistemática e acompanhamento técnico ao longo do seu
+                    ciclo de vida.
+                </p>
+            </article>
 
-        <div class="card">
-            <div class="number">{{ simulated_count }}</div>
-            <h3>Registos Simulados</h3>
-            <p>Dados de demonstração identificados</p>
+            <article class="institution-card">
+                <h3>Visão</h3>
+                <p>
+                    Constituir uma plataforma nacional de referência para
+                    a gestão de informação, acompanhamento e supervisão
+                    das barragens de rejeitados e estruturas associadas
+                    das empresas mineiras em Angola.
+                </p>
+            </article>
+
+            <article class="institution-card">
+                <h3>Valores</h3>
+                <p>
+                    Segurança, responsabilidade, transparência,
+                    integridade dos dados, rigor técnico, rastreabilidade,
+                    sustentabilidade e melhoria contínua.
+                </p>
+            </article>
+
+            <article class="institution-card">
+                <h3>Finalidade</h3>
+                <p>
+                    Apoiar a ENDIAMA na consolidação da informação nacional,
+                    no acompanhamento das empresas mineiras e na produção
+                    de informação técnica e institucional para apoiar
+                    decisões fundamentadas.
+                </p>
+            </article>
         </div>
     </section>
 
-    <section class="actions">
-        <h2>Acesso aos módulos</h2>
-        <a href="/admin/">Painel Administrativo</a>
-          <a href="/mapa/">Mapa Nacional de Barragens</a>
+    <section class="section">
+        <h2 class="section-title">Objectivos estratégicos</h2>
+        <p class="section-intro">
+            Áreas fundamentais de actuação da plataforma.
+        </p>
+
+        <ul class="objectives">
+            <li>Manter o registo nacional das instalações e estruturas associadas.</li>
+            <li>Acompanhar as fases de projecto, construção, operação, fechamento e pós-fechamento.</li>
+            <li>Organizar e interpretar os dados de monitorização de cada instalação.</li>
+            <li>Facilitar o acompanhamento de segurança e conformidade técnica.</li>
+            <li>Disponibilizar informação individual por instalação e consolidada por empresa.</li>
+            <li>Apoiar a elaboração de relatórios periódicos e nacionais.</li>
+        </ul>
+    </section>
+
+    <section class="section" id="navegacao">
+        <h2 class="section-title">Navegação do portal</h2>
+        <p class="section-intro">
+            Seleccione uma área para consultar a informação e as
+            funcionalidades disponíveis, de acordo com as suas permissões.
+        </p>
+
+        <div class="menu-grid">
+            <a class="menu-card" href="{% url 'facilities:national_map' %}">
+                <span class="menu-icon">🌍</span>
+                <span>
+                    <strong>Sistema Geográfico</strong>
+                    <small>Localização e distribuição territorial</small>
+                </span>
+            </a>
+
+            <a class="menu-card" href="{% url 'facilities:territorio' %}">
+                <span class="menu-icon">📍</span>
+                <span>
+                    <strong>Gestão Territorial</strong>
+                    <small>Informação territorial</small>
+                </span>
+            </a>
+
+            <a class="menu-card" href="{% url 'facilities:monitoring_dashboard' %}">
+                <span class="menu-icon">📈</span>
+                <span>
+                    <strong>Monitorização</strong>
+                    <small>Dados, leituras e interpretação</small>
+                </span>
+            </a>
+
+            <a class="menu-card" href="{% url 'facilities:tarp_events_dashboard' %}">
+                <span class="menu-icon">🛡️</span>
+                <span>
+                    <strong>Segurança e TARP</strong>
+                    <small>Alertas, eventos e respostas</small>
+                </span>
+            </a>
+
+            <a class="menu-card" href="{% url 'facilities:compliance_dashboard' %}">
+                <span class="menu-icon">✓</span>
+                <span>
+                    <strong>Conformidade GISTM</strong>
+                    <small>Requisitos e avaliações</small>
+                </span>
+            </a>
+
+            <a class="menu-card" href="{% url 'facilities:seguranca' %}">
+                <span class="menu-icon">🏗️</span>
+                <span>
+                    <strong>Gestão de Segurança</strong>
+                    <small>Área de segurança das instalações</small>
+                </span>
+            </a>
+
+            <a class="menu-card" href="{% url 'facilities:operacoes' %}">
+                <span class="menu-icon">⚙️</span>
+                <span>
+                    <strong>Operações</strong>
+                    <small>Gestão operacional</small>
+                </span>
+            </a>
+
+            <a class="menu-card" href="/admin/">
+                <span class="menu-icon">🏢</span>
+                <span>
+                    <strong>Administração</strong>
+                    <small>Registos, empresas e gestão do sistema</small>
+                </span>
+            </a>
+        </div>
     </section>
 </main>
 
-<footer>
-    ENDIAMA EP | ENT-GIS | Ambiente de desenvolvimento
+<footer class="footer">
+    <strong>ENDIAMA NATIONAL TAILINGS GIS</strong><br>
+    Sistema Nacional de Registo, Monitorização e Gestão de Barragens de Rejeitados e Estruturas de Retorno de Águas.<br>
+    Angola · Plataforma de supervisão e gestão de informação.
 </footer>
-
 </body>
 </html>

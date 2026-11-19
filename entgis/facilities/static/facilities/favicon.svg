@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <rect width="64" height="64" rx="13" fill="#102b46"/>
+  <circle cx="32" cy="32" r="23" fill="none" stroke="#55c79a" stroke-width="2.5"/>
+  <path d="M9 32h46M32 9c-9 8-13 15-13 23s4 15 13 23M32 9c9 8 13 15 13 23s-4 15-13 23"
+        fill="none" stroke="#55c79a" stroke-width="1.5"/>
+  <text x="32" y="38" text-anchor="middle"
+        font-family="Arial,sans-serif" font-size="17"
+        font-weight="bold" fill="#ffffff">EG</text>
+</svg>

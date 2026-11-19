@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ENT-GIS | Registar leitura</title>
+<style>
+body{font-family:Arial,sans-serif;background:#f1f5f9;color:#172b4d;margin:0}
+header{background:#102b46;color:white;padding:22px 5%}
+main{max-width:850px;margin:30px auto;padding:0 18px}
+.panel{background:white;border:1px solid #e2e8f0;border-radius:12px;padding:25px}
+label{display:block;font-weight:600;margin:15px 0 6px}
+input,select,textarea{box-sizing:border-box;width:100%;padding:11px;border:1px solid #cbd5e1;border-radius:6px}
+button,a{display:inline-block;margin-top:20px;padding:12px 18px;border:0;border-radius:7px;background:#075b9a;color:white;text-decoration:none;cursor:pointer}
+.errorlist{color:#b91c1c}
+.help{color:#64748b;font-size:13px}
+</style>
+</head>
+<body>
+<header><h1>Registo de leitura de monitorização</h1><div>ENT-GIS | Entrada de dados operacionais</div></header>
+<main>
+<div class="panel">
+  <p class="help">Introduza os dados conforme a ficha de campo ou o sistema de instrumentação. A unidade é atribuída automaticamente pelo catálogo.</p>
+  {% if messages %}{% for message in messages %}<p>{{ message }}</p>{% endfor %}{% endif %}
+  <form method="post">
+    {% csrf_token %}
+    {{ form.non_field_errors }}
+    {% for field in form %}
+      <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+      {{ field }}
+      {{ field.errors }}
+    {% endfor %}
+    <button type="submit">Guardar leitura e interpretar</button>
+    <a href="{% url 'facilities:monitoring_dashboard' %}">Cancelar</a>
+  </form>
+</div>
+</main>
+</body>
+</html>

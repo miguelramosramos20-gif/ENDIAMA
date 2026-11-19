@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ENT-GIS | Histórico de monitorização</title>
+<style>
+body{font-family:Arial,sans-serif;background:#f1f5f9;color:#172b4d;margin:0}
+header{background:#102b46;color:white;padding:22px 5%}
+main{max-width:1350px;margin:28px auto;padding:0 18px}
+.panel{background:white;border:1px solid #e2e8f0;border-radius:12px;padding:20px;margin-bottom:18px}
+.filters{display:flex;gap:12px;flex-wrap:wrap;align-items:end}
+label{display:block;font-size:13px;font-weight:bold;margin-bottom:5px}
+select{padding:10px;border:1px solid #cbd5e1;border-radius:6px;min-width:180px}
+button,a{display:inline-block;padding:10px 15px;border:0;border-radius:6px;background:#075b9a;color:white;text-decoration:none;cursor:pointer}
+table{width:100%;border-collapse:collapse;min-width:950px}
+th,td{padding:10px;text-align:left;border-bottom:1px solid #e2e8f0;font-size:13px}
+th{background:#f8fafc}
+.table-wrap{overflow-x:auto}
+</style>
+</head>
+<body>
+<header><h1>Histórico de monitorização</h1><div>ENT-GIS | Registo cronológico e rastreabilidade</div></header>
+<main>
+<div class="panel">
+<form method="get" class="filters">
+  <div><label>Instalação</label><select name="facility"><option value="">Todas</option>{% for f in facilities %}<option value="{{ f.id }}" {% if selected_facility == f.id|stringformat:"s" %}selected{% endif %}>{{ f.name }}</option>{% endfor %}</select></div>
+  <div><label>Variável</label><select name="parameter"><option value="">Todas</option>{% for p in parameters %}<option value="{{ p.id }}" {% if selected_parameter == p.id|stringformat:"s" %}selected{% endif %}>{{ p.name }}</option>{% endfor %}</select></div>
+  <div><label>Interpretação</label><select name="interpretation"><option value="">Todas</option>{% for code,label in interpretation_choices %}<option value="{{ code }}" {% if selected_interpretation == code %}selected{% endif %}>{{ label }}</option>{% endfor %}</select></div>
+  <button type="submit">Filtrar</button>
+  <a href="{% url 'facilities:monitoring_history' %}">Limpar</a>
+</form>
+</div>
+<div class="panel table-wrap">
+<table>
+<thead><tr><th>Data observada</th><th>Instalação</th><th>Variável</th><th>Valor</th><th>Instrumento</th><th>Interpretação</th><th>Critério / versão</th><th>Registado por</th></tr></thead>
+<tbody>
+{% for r in readings %}
+<tr>
+<td>{{ r.observed_at|date:"d/m/Y H:i" }}</td>
+<td>{{ r.facility.name }}</td>
+<td>{{ r.parameter.name }}</td>
+<td>{{ r.value }} {{ r.unit }}</td>
+<td>{{ r.instrument_code|default:"—" }}</td>
+<td>{{ r.get_interpretation_display }}</td>
+<td>{% if r.criterion %}v{{ r.criterion.version }}{% else %}—{% endif %}</td>
+<td>{{ r.entered_by|default:"—" }}</td>
+</tr>
+{% empty %}<tr><td colspan="8">Não existem registos para os filtros seleccionados.</td></tr>{% endfor %}
+</tbody>
+</table>
+</div>
+<p><a href="{% url 'facilities:monitoring_dashboard' %}">Voltar ao painel</a></p>
+</main>
+</body>
+</html>

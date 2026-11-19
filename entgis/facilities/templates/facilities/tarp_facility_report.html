@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ENT-GIS | Relatório TARP</title>
+<style>
+:root {
+    --navy:#10243a;
+    --blue:#2878b9;
+    --bg:#f3f6fa;
+    --text:#1c2b3b;
+    --muted:#748396;
+    --border:#e5ebf1;
+    --green:#16866a;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);
+font-family:Inter,"Segoe UI",Arial,sans-serif}
+a{text-decoration:none}
+.sidebar{position:fixed;inset:0 auto 0 0;width:245px;
+background:var(--navy);color:white;padding:25px 17px}
+.brand{font-size:21px;font-weight:800;letter-spacing:1px;
+padding:5px 9px 25px;border-bottom:1px solid #ffffff20}
+.brand small{display:block;font-size:9px;color:#a9bdce;
+letter-spacing:.8px;margin-top:5px}
+.nav-label{font-size:10px;color:#8fa6b9;letter-spacing:1px;
+margin:27px 10px 10px;text-transform:uppercase}
+.nav-link{display:block;padding:12px 13px;border-radius:8px;
+color:#c5d2de;font-size:13px;margin:3px 0}
+.nav-link:hover,.nav-link.active{background:#214766;color:white}
+.main{margin-left:245px;min-height:100vh}
+.topbar{height:65px;background:white;border-bottom:1px solid var(--border);
+display:flex;align-items:center;justify-content:space-between;padding:0 35px}
+.crumb{font-size:12px;color:var(--muted)}
+.content{max-width:1500px;margin:auto;padding:32px 35px}
+.eyebrow{font-size:10px;color:var(--blue);font-weight:800;
+letter-spacing:1.4px;text-transform:uppercase}
+h1{font-size:26px;margin:9px 0}
+h2{font-size:15px;margin:0 0 15px}
+.description{font-size:13px;color:var(--muted);line-height:1.7}
+.kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;
+margin:25px 0}
+.kpi,.panel{background:white;border:1px solid var(--border);
+border-radius:13px;padding:18px;box-shadow:0 3px 14px #142a4108}
+.kpi small{font-size:11px;color:var(--muted)}
+.kpi strong{display:block;font-size:27px;color:var(--navy);margin-top:9px}
+.panel{margin:18px 0}
+.level-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.level{background:#f7f9fc;border:1px solid var(--border);
+border-radius:9px;padding:13px}
+.level span{display:block;font-size:11px;color:var(--muted)}
+.level strong{display:block;font-size:22px;margin-top:6px;color:var(--navy)}
+.event{border-top:1px solid var(--border);padding:17px 0}
+.event:first-of-type{border-top:0}
+.event-head{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.event-title{font-size:14px;font-weight:750;color:var(--navy)}
+.meta{font-size:11px;color:var(--muted);line-height:1.8;margin-top:7px}
+.pills{display:flex;gap:6px;flex-wrap:wrap}
+.pill{font-size:10px;padding:6px 9px;border-radius:20px;
+background:#edf2f7;color:#42556a}
+.red{background:#fde8e7;color:#a52e29}
+.orange{background:#fff0dc;color:#98601c}
+.yellow{background:#fff8d9;color:#806515}
+.green{background:#e3f4ed;color:#176b51}
+.history{margin-top:12px;border-top:1px solid var(--border);padding-top:10px}
+.history summary{font-size:11px;font-weight:700;cursor:pointer}
+.history-item{font-size:11px;line-height:1.7;padding:8px 0;
+border-bottom:1px solid #eef1f5;color:#526477}
+.empty{padding:25px;text-align:center;color:var(--muted);font-size:13px}
+.actions{display:flex;gap:9px;flex-wrap:wrap;margin-top:20px}
+.btn{display:inline-block;padding:10px 14px;border-radius:7px;
+background:var(--blue);color:white;font-size:11px}
+.btn-secondary{background:white;color:var(--navy);
+border:1px solid var(--border)}
+.note{font-size:11px;color:#75613a;background:#fff9ec;
+border:1px solid #f0e1bd;padding:13px;border-radius:8px;line-height:1.7}
+@media(max-width:1000px){.kpis{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:700px){
+.sidebar{position:relative;width:auto;padding:15px}
+.main{margin-left:0}.topbar{padding:0 18px}
+.content{padding:22px 16px}.kpis{grid-template-columns:repeat(2,1fr)}
+.level-grid{grid-template-columns:repeat(2,1fr)}
+}
+@media print{
+.sidebar,.topbar,.actions{display:none}
+.main{margin:0}.content{max-width:none;padding:10px}
+body{background:white}.panel,.kpi{box-shadow:none;break-inside:avoid}
+}
+</style>
+</head>
+<body>
+<aside class="sidebar">
+    <div class="brand">ENT-GIS
+        <small>ENDIAMA NATIONAL TAILINGS GIS</small>
+    </div>
+    <div class="nav-label">Gestão de rejeitados</div>
+    <a class="nav-link" href="{% url 'facilities:tarp_events_dashboard' %}">Painel nacional TARP</a>
+    <a class="nav-link active" href="#">Relatório da instalação</a>
+    <div class="nav-label">Instalação</div>
+    <div class="nav-link">{{ facility.name }}</div>
+</aside>
+
+<main class="main">
+    <header class="topbar">
+        <div class="crumb">ENT-GIS / TARP / Relatório individual</div>
+        <div class="crumb">{{ facility.company.name }}</div>
+    </header>
+
+    <div class="content">
+        <div class="eyebrow">Relatório individual de monitorização e resposta</div>
+        <h1>{{ facility.name }}</h1>
+        <p class="description">
+            Empresa: {{ facility.company.name }}<br>
+            Localização: {{ facility.municipality }}, {{ facility.province }}<br>
+            Estado do ciclo de vida: {{ facility.get_lifecycle_stage_display|default:facility.lifecycle_stage }}
+        </p>
+
+        <div class="actions">
+            <a class="btn btn-secondary" href="{% url 'facilities:tarp_events_dashboard' %}">Voltar ao painel TARP</a>
+            <a class="btn" href="#" onclick="window.print();return false;">Imprimir relatório</a>
+        </div>
+
+        <section class="kpis">
+            <div class="kpi"><small>Total de eventos</small><strong>{{ total_events }}</strong></div>
+            <div class="kpi"><small>Eventos abertos</small><strong>{{ open_events }}</strong></div>
+            <div class="kpi"><small>Reconhecidos</small><strong>{{ acknowledged_events }}</strong></div>
+            <div class="kpi"><small>Encerrados</small><strong>{{ closed_events }}</strong></div>
+            <div class="kpi"><small>Em atraso</small><strong>{{ overdue_events }}</strong></div>
+            <div class="kpi"><small>Sem resposta atribuída</small><strong>{{ awaiting_response }}</strong></div>
+            <div class="kpi"><small>Alertas L4 não encerrados</small><strong>{{ critical_events }}</strong></div>
+            <div class="kpi"><small>Eventos apresentados</small><strong>{{ displayed_events_count }}</strong></div>
+        </section>
+
+        <section class="panel">
+            <h2>Distribuição por nível de alerta da monitorização</h2>
+            <div class="level-grid">
+                {% for level, count in trigger_counts.items %}
+                <div class="level">
+                    <span>{{ level }}</span>
+                    <strong>{{ count }}</strong>
+                </div>
+                {% endfor %}
+            </div>
+        </section>
+
+        <section class="panel">
+            <h2>Distribuição por nível de resposta operacional</h2>
+            <div class="level-grid">
+                {% for level, count in response_counts.items %}
+                <div class="level">
+                    <span>{{ level }}</span>
+                    <strong>{{ count }}</strong>
+                </div>
+                {% endfor %}
+            </div>
+        </section>
+
+        <section class="panel">
+            <h2>Registo cronológico de eventos e histórico auditável</h2>
+            {% for event in events %}
+            <article class="event">
+                <div class="event-head">
+                    <div class="event-title">Evento #{{ event.pk }} — {{ event.get_status_display }}</div>
+                    <div class="pills">
+                        {% if event.trigger_level %}
+                        <span class="pill {% if event.trigger_level == 'L4' %}red{% elif event.trigger_level == 'L3' %}orange{% elif event.trigger_level == 'L2' %}yellow{% else %}green{% endif %}">
+                            {{ event.get_trigger_level_display }}
+                        </span>
+                        {% endif %}
+                        {% if event.response_level %}
+                        <span class="pill {% if event.response_level == 'S4' %}red{% elif event.response_level == 'S3' %}orange{% elif event.response_level == 'S2' %}yellow{% else %}green{% endif %}">
+                            {{ event.get_response_level_display }}
+                        </span>
+                        {% endif %}
+                        {% if event.due_at and event.due_at < now and event.status != 'CLOSED' %}
+                        <span class="pill red">Em atraso</span>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div class="meta">
+                    Abertura: {{ event.opened_at|date:"d/m/Y H:i" }} |
+                    Responsável: {{ event.responsible|default:"Não atribuído" }} |
+                    Prazo: {{ event.due_at|date:"d/m/Y H:i"|default:"Não definido" }}
+                    {% if event.associated_structure %}
+                    <br>Estrutura: {{ event.associated_structure }}
+                    {% endif %}
+                    {% if event.reading %}
+                    <br>Leitura associada: {{ event.reading }}
+                    {% endif %}
+                    {% if event.acknowledged_at %}
+                    <br>Reconhecido em: {{ event.acknowledged_at|date:"d/m/Y H:i" }}
+                    {% endif %}
+                    {% if event.closed_at %}
+                    <br>Encerrado em: {{ event.closed_at|date:"d/m/Y H:i" }}
+                    {% endif %}
+                    {% if event.pae_activated %}
+                    <br><strong>PAE activado</strong>
+                    {% endif %}
+                </div>
+
+                <p class="description">{{ event.trigger_description }}</p>
+                {% if event.action_taken %}
+                <p class="description"><strong>Acção registada:</strong> {{ event.action_taken }}</p>
+                {% endif %}
+
+                <details class="history">
+                    <summary>Consultar histórico de auditoria ({{ event.history.all|length }} registos)</summary>
+                    {% for log in event.history.all %}
+                    <div class="history-item">
+                        <strong>{{ log.action }}</strong> —
+                        {{ log.performed_at|date:"d/m/Y H:i" }} —
+                        {{ log.performed_by.get_full_name|default:log.performed_by.username }}<br>
+                        {{ log.details }}
+                    </div>
+                    {% empty %}
+                    <div class="history-item">Ainda não existem registos de auditoria para este evento.</div>
+                    {% endfor %}
+                </details>
+            </article>
+            {% empty %}
+            <div class="empty">Não existem eventos TARP registados para esta instalação.</div>
+            {% endfor %}
+        </section>
+
+        <div class="note">
+            Este relatório apresenta os registos TARP associados exclusivamente à instalação seleccionada.
+            Os indicadores são calculados sobre o total de eventos; a listagem apresenta até 200 eventos
+            mais recentes. O histórico de auditoria é apresentado conforme os registos existentes no sistema.
+        </div>
+    </div>
+</main>
+</body>
+</html>

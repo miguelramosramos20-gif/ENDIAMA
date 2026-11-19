@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Transição do Ciclo de Vida | ENT-GIS</title>
+<style>
+body{font-family:Arial,sans-serif;background:#f2f5f2;color:#24352b;margin:0}
+header{background:#123d2b;color:white;padding:22px 5%}
+main{max-width:900px;margin:30px auto;padding:0 20px}
+.card{background:white;padding:22px;margin:15px 0;border-radius:8px}
+textarea,input{width:100%;padding:10px;box-sizing:border-box;margin:8px 0 16px}
+button{padding:12px 18px;background:#17633f;color:white;border:0;border-radius:5px}
+a{color:#17633f;font-weight:bold}
+</style>
+</head>
+<body>
+<header>
+<h1>ENDIAMA | Controlo do Ciclo de Vida</h1>
+<p>Transição institucional entre fases da instalação</p>
+</header>
+<main>
+<p><a href="{% url 'facilities:lifecycle_review_queue' %}">Voltar à supervisão</a></p>
+<div class="card">
+<h2>{{ facility.name }}</h2>
+<p>Empresa: {{ facility.company.name }}</p>
+<p>Fase actual: <strong>{{ facility.get_lifecycle_stage_display }}</strong></p>
+{% if next_stage %}
+<p>Fase seguinte: <strong>{{ next_stage.1 }}</strong></p>
+{% else %}
+<p>A instalação já se encontra na última fase do ciclo de vida.</p>
+{% endif %}
+<p>Processo da fase actual aprovado:
+<strong>{{ approved_process|yesno:"Sim,Não" }}</strong></p>
+</div>
+
+{% if next_stage and approved_process %}
+<div class="card">
+<h2>Autorizar transição</h2>
+<form method="post">
+{% csrf_token %}
+<input type="hidden" name="new_stage" value="{{ next_stage.0 }}">
+<label for="effective_date">Data efectiva da transição</label>
+<input type="date" id="effective_date" name="effective_date">
+<label for="notes">Justificação institucional obrigatória</label>
+<textarea id="notes" name="notes" rows="5" required></textarea>
+<button type="submit">Confirmar transição de fase</button>
+</form>
+</div>
+{% else %}
+<div class="card">
+<p>A transição está bloqueada. É necessário aprovar o processo da fase actual e cumprir a sequência do ciclo de vida.</p>
+</div>
+{% endif %}
+</main>
+</body>
+</html>

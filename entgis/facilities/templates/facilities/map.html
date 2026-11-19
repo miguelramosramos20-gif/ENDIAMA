@@ -2,6 +2,7 @@
 <html lang="pt">
 <head>
     <meta charset="UTF-8">
+    <link rel="icon" type="image/svg+xml" href="/static/facilities/favicon.svg">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ENT-GIS | Mapa Nacional</title>
 
@@ -109,6 +110,109 @@
             color: #64748b;
             font-size: 13px;
         }
+
+        /* Painel interactivo de camadas geográficas */
+        .map-wrapper {
+            position: relative;
+            width: 100%;
+        }
+
+        .layer-panel {
+            position: absolute;
+            top: 16px;
+            left: 16px;
+            z-index: 5;
+            width: 270px;
+            max-width: calc(100% - 32px);
+            max-height: 500px;
+            overflow-y: auto;
+            padding: 16px;
+            background: rgba(255, 255, 255, 0.97);
+            border: 1px solid #cbd5e1;
+            border-radius: 10px;
+            box-shadow: 0 4px 16px rgba(15, 23, 42, 0.18);
+        }
+
+        .layer-panel h3 {
+            margin: 0 0 14px;
+            color: #102b46;
+            font-size: 16px;
+        }
+
+        .layer-group {
+            margin-top: 13px;
+            padding-top: 11px;
+            border-top: 1px solid #e2e8f0;
+        }
+
+        .layer-group h4 {
+            margin: 0 0 9px;
+            color: #334155;
+            font-size: 13px;
+        }
+
+        .layer-option {
+            display: flex;
+            align-items: flex-start;
+            gap: 8px;
+            margin: 9px 0;
+            font-size: 13px;
+            line-height: 1.4;
+            cursor: pointer;
+        }
+
+        .layer-option input {
+            margin-top: 2px;
+            accent-color: #16835d;
+        }
+
+        .layer-status {
+            display: block;
+            margin: 2px 0 0 24px;
+            color: #94a3b8;
+            font-size: 11px;
+        }
+
+        .hypsometry-legend {
+            margin: 8px 0 4px 24px;
+            font-size: 11px;
+            color: #475569;
+        }
+
+        .hypsometry-gradient {
+            height: 10px;
+            border-radius: 4px;
+            margin: 5px 0;
+            background: linear-gradient(
+                to right,
+                #2c7bb6,
+                #abd9e9,
+                #ffffbf,
+                #a6d96a,
+                #fdae61,
+                #d7191c,
+                #ffffff
+            );
+        }
+
+        .hypsometry-values {
+            display: flex;
+            justify-content: space-between;
+            font-size: 10px;
+        }
+
+        @media (max-width: 600px) {
+            .layer-panel {
+                top: 10px;
+                left: 10px;
+                width: 230px;
+                padding: 12px;
+            }
+
+            #map {
+                height: 620px;
+            }
+        }
     </style>
 </head>
 
@@ -154,6 +258,19 @@
             </div>
 
             <div class="field">
+                <label for="municipality">Município</label>
+                <select name="municipality" id="municipality">
+                    <option value="">Todos os municípios</option>
+                    {% for municipality in municipalities %}
+                        <option value="{{ municipality }}"
+                            {% if selected_municipality == municipality %}selected{% endif %}>
+                            {{ municipality }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="field">
                 <label for="company">Sociedade mineira</label>
                 <select name="company" id="company">
                     <option value="">Todas as sociedades</option>
@@ -181,7 +298,80 @@
         </div>
     {% endif %}
 
-    <div id="map"></div>
+    <div class="map-wrapper">
+        <aside class="layer-panel" aria-label="Controlo de camadas geográficas">
+            <h3>ENT-GIS | Camadas Geográficas</h3>
+
+            <div class="layer-group">
+                <h4>Terreno e elevação</h4>
+                <label class="layer-option" for="layer-hillshade">
+                    <input type="checkbox" id="layer-hillshade" checked>
+                    <span>Relevo sombreado (Hillshade)</span>
+                </label>
+
+                <label class="layer-option" for="layer-hypsometry">
+                    <input type="checkbox" id="layer-hypsometry">
+                    <span>Hipsometria (classes de altitude)</span>
+                </label>
+
+                <div class="hypsometry-legend">
+                    <div class="hypsometry-gradient"></div>
+                    <div class="hypsometry-values">
+                        <span>0 m</span>
+                        <span>1.000 m</span>
+                        <span>2.000 m</span>
+                        <span>3.000 m</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="layer-group">
+                <h4>Infra-estruturas mineiras</h4>
+                <label class="layer-option" for="layer-facilities">
+                    <input type="checkbox" id="layer-facilities" checked>
+                    <span>Barragens de rejeitados e instalações</span>
+                </label>
+            </div>
+
+            <div class="layer-group">
+                <h4>Organização territorial</h4>
+                <label class="layer-option" for="layer-provinces">
+                    <input type="checkbox" id="layer-provinces" checked>
+                    <span>Limites provinciais (21 províncias)</span>
+                </label>
+                <span class="layer-status">GeoJSON | Nova divisão administrativa</span>
+            </div>
+
+            <div class="layer-group">
+                <h4>Camadas em preparação</h4>
+                <label class="layer-option">
+                    <input type="checkbox" disabled>
+                    <span>Hipsometria</span>
+                </label>
+                <span class="layer-status">Em preparação</span>
+
+                <label class="layer-option">
+                    <input type="checkbox" disabled>
+                    <span>Declividade</span>
+                </label>
+                <span class="layer-status">Em preparação</span>
+
+                <label class="layer-option">
+                    <input type="checkbox" disabled>
+                    <span>Hidrografia e drenagem</span>
+                </label>
+                <span class="layer-status">Em preparação</span>
+
+                <label class="layer-option">
+                    <input type="checkbox" disabled>
+                    <span>Limites administrativos</span>
+                </label>
+                <span class="layer-status">Em preparação</span>
+            </div>
+        </aside>
+
+        <div id="map"></div>
+    </div>
 
 </main>
 
@@ -206,8 +396,17 @@ const map = new maplibregl.Map({
     container: "map",
     style: "https://tiles.openfreemap.org/styles/positron",
     center: [18.5, -12.5],
-    zoom: 4.5,
+    zoom: 2.5,
+    pitch: 48,
+    maxPitch: 75,
     attributionControl: true
+});
+
+// Activar a visualização esférica do planeta.
+map.on("style.load", function () {
+    map.setProjection({
+        type: "globe"
+    });
 });
 
 map.addControl(
@@ -215,7 +414,119 @@ map.addControl(
     "top-right"
 );
 
+// Referências aos marcadores para permitir a sua activação/desactivação.
+const facilityMarkers = [];
+
 map.on("load", function () {
+
+    // Modelo digital de elevação global - Terrain Tiles / AWS.
+    map.addSource("entgis-dem", {
+        type: "raster-dem",
+        tiles: [
+            "https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{z}/{x}/{y}.png"
+        ],
+        tileSize: 256,
+        maxzoom: 15,
+        encoding: "terrarium",
+        attribution: 'Terrain Tiles © Mapzen / Tilezen — <a href="https://github.com/tilezen/joerd/blob/master/docs/attribution.md" target="_blank" rel="noopener">Créditos e fontes dos dados</a>'
+    });
+
+    const firstSymbolLayer = map.getStyle().layers.find(
+        layer => layer.type === "symbol"
+    );
+
+    // LIMITES ADMINISTRATIVOS PROVINCIAIS DE ANGOLA
+    map.addSource("entgis-provinces", {
+        type: "geojson",
+        data: "/static/facilities/data/angola_provincias.geojson",
+        maxzoom: 6
+    });
+
+    map.addLayer({
+        id: "entgis-provinces-fill",
+        type: "fill",
+        source: "entgis-provinces",
+        paint: {
+            "fill-color": "#4386ad",
+            "fill-opacity": 0.06
+        }
+    }, firstSymbolLayer ? firstSymbolLayer.id : undefined);
+
+    map.addLayer({
+        id: "entgis-provinces-outline",
+        type: "line",
+        source: "entgis-provinces",
+        paint: {
+            "line-color": "#075b9a",
+            "line-width": [
+                "interpolate", ["linear"], ["zoom"],
+                1, 0.8,
+                3, 1.2,
+                5, 1.8,
+                8, 2.2
+            ],
+            "line-opacity": 1
+        }
+    }, firstSymbolLayer ? firstSymbolLayer.id : undefined);
+
+    map.addLayer({
+        id: "entgis-provinces-labels",
+        type: "symbol",
+        source: "entgis-provinces",
+        minzoom: 4.5,
+        layout: {
+            "text-font": ["Noto Sans Regular"],
+            "text-field": ["get", "Nome_Prov"],
+            "text-size": 11,
+            "text-allow-overlap": false,
+            "text-ignore-placement": false
+        },
+        paint: {
+            "text-color": "#16324f",
+            "text-halo-color": "#ffffff",
+            "text-halo-width": 1.5
+        }
+    });
+
+    // CAMADA DE RELEVO SOMBREADO DO ENT-GIS
+
+    // CAMADA HIPSOMÉTRICA: cores por altitude em metros.
+    // Fica inicialmente desligada para preservar a visualização actual.
+    map.addLayer({
+        id: "entgis-hypsometry",
+        type: "color-relief",
+        source: "entgis-dem",
+        paint: {
+            "color-relief-opacity": 0.72,
+            "color-relief-color": [
+                "interpolate",
+                ["linear"],
+                ["elevation"],
+                0, "#2c7bb6",
+                200, "#abd9e9",
+                500, "#ffffbf",
+                1000, "#d9ef8b",
+                1500, "#a6d96a",
+                2000, "#fdae61",
+                2500, "#d7191c",
+                3000, "#ffffff"
+            ]
+        },
+        layout: {
+            visibility: "none"
+        }
+    }, firstSymbolLayer ? firstSymbolLayer.id : undefined);
+
+    map.addLayer({
+        id: "entgis-dem-hillshade",
+        type: "hillshade",
+        source: "entgis-dem",
+        paint: {
+            "hillshade-exaggeration": 0.65,
+            "hillshade-illumination-direction": 335,
+            "hillshade-illumination-anchor": "viewport"
+        }
+    }, firstSymbolLayer ? firstSymbolLayer.id : undefined);
 
     const bounds = new maplibregl.LngLatBounds();
 
@@ -278,22 +589,55 @@ map.on("load", function () {
             facility.latitude
         ];
 
-        new maplibregl.Marker()
+        const marker = new maplibregl.Marker()
             .setLngLat(coordinates)
             .setPopup(
                 new maplibregl.Popup().setDOMContent(content)
             )
             .addTo(map);
 
+        facilityMarkers.push(marker);
         bounds.extend(coordinates);
     });
 
-    if (facilities.length > 0) {
-        map.fitBounds(bounds, {
-            padding: 40,
-            maxZoom: 10
+    // Controlos interactivos das camadas geográficas.
+    document.getElementById("layer-hillshade").addEventListener("change", function () {
+        map.setLayoutProperty(
+            "entgis-dem-hillshade",
+            "visibility",
+            this.checked ? "visible" : "none"
+        );
+    });
+
+    document.getElementById("layer-hypsometry").addEventListener("change", function () {
+        map.setLayoutProperty(
+            "entgis-hypsometry",
+            "visibility",
+            this.checked ? "visible" : "none"
+        );
+    });
+
+    document.getElementById("layer-facilities").addEventListener("change", function () {
+        facilityMarkers.forEach(function (marker) {
+            marker.getElement().style.display = this.checked ? "" : "none";
+        }, this);
+    });
+
+    // Controlo da camada administrativa provincial.
+    document.getElementById("layer-provinces").addEventListener("change", function () {
+        const visibility = this.checked ? "visible" : "none";
+
+        [
+            "entgis-provinces-fill",
+            "entgis-provinces-outline",
+            "entgis-provinces-labels"
+        ].forEach(function (layerId) {
+            map.setLayoutProperty(layerId, "visibility", visibility);
         });
-    }
+    });
+
+    // Mantemos o centro e o zoom definidos na inicialização do mapa.
+    // Os marcadores são apresentados sem alterar automaticamente a câmara.
 });
 </script>
 </body>

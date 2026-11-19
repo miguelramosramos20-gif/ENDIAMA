@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Gestão de Critérios TARP | ENT-GIS</title>
+<style>
+:root{--navy:#10243a;--blue:#1769aa;--bg:#f3f6fa;--line:#dfe6ee;--text:#243447}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);font:14px Arial,sans-serif;color:var(--text)}
+header{background:var(--navy);color:white;padding:24px 5%}
+header h1{margin:0 0 7px;font-size:23px}
+header p{margin:0;color:#c7d5e3}
+main{max-width:1450px;margin:28px auto;padding:0 22px}
+.top{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:20px}
+a.btn{background:var(--blue);color:white;padding:11px 15px;border-radius:7px;text-decoration:none}
+.panel{background:white;border:1px solid var(--line);border-radius:12px;padding:20px;margin-bottom:22px;box-shadow:0 3px 12px #10243a0a}
+h2{font-size:17px;margin:0 0 16px}
+table{width:100%;border-collapse:collapse;min-width:850px}
+th,td{text-align:left;padding:12px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+th{background:#f7f9fc;color:#526477;font-size:12px;text-transform:uppercase}
+.table-wrap{overflow-x:auto}
+.status{display:inline-block;padding:5px 9px;border-radius:20px;background:#edf1f5;font-size:12px;font-weight:bold}
+.DRAFT{background:#edf1f5}.REVIEW{background:#fff2d6;color:#805600}
+.APPROVED{background:#dff4e8;color:#17643b}.RETIRED{background:#fce5e5;color:#9b2929}
+form{margin:7px 0;padding:10px;background:#f7f9fc;border-radius:8px}
+input,textarea{width:100%;padding:9px;border:1px solid #cbd5df;border-radius:6px;margin:5px 0 9px}
+button{border:0;border-radius:6px;padding:9px 12px;background:var(--blue);color:white;cursor:pointer;margin:3px}
+button.reject{background:#a33b3b}
+small{color:#607286}
+.message{padding:11px;background:#e8f2ff;border-radius:7px;margin-bottom:12px}
+@media(max-width:700px){main{padding:0 12px}.panel{padding:13px}}
+</style>
+</head>
+<body>
+<header>
+<h1>ENT-GIS | Gestão de Critérios TARP</h1>
+<p>Controlo de versões, revisão técnica, aprovação e rastreabilidade</p>
+</header>
+<main>
+<div class="top">
+<div>
+<h2>Registo e estado dos critérios</h2>
+<small>Os limites só são utilizados na interpretação quando existe um critério aprovado e vigente.</small>
+</div>
+{% if request.user.is_staff %}
+<a class="btn" href="{% url 'facilities:monitoring_criterion_entry' %}">+ Novo critério</a>
+{% endif %}
+</div>
+
+{% if messages %}
+{% for message in messages %}
+<div class="message">{{ message }}</div>
+{% endfor %}
+{% endif %}
+
+<section class="panel">
+<h2>Critérios registados</h2>
+<div class="table-wrap">
+<table>
+<thead><tr>
+<th>Instalação</th><th>Variável</th><th>Versão</th>
+<th>Vigência</th><th>Estado</th><th>Acções</th>
+</tr></thead>
+<tbody>
+{% for c in criteria %}
+<tr>
+<td>{{ c.facility }}</td>
+<td>{{ c.parameter }}</td>
+<td>v{{ c.version }}</td>
+<td>{{ c.effective_from|default:"Não definida" }}</td>
+<td><span class="status {{ c.status }}">{{ c.get_status_display }}</span></td>
+<td>
+{% if c.status == "DRAFT" %}
+    {% if c.pk in editable_criterion_ids %}
+        <p><a href="{% url 'facilities:monitoring_criterion_edit' c.pk %}">Editar rascunho</a></p>
+    {% endif %}
+    {% if c.pk in submittable_criterion_ids %}
+        <form method="post" action="{% url 'facilities:monitoring_criterion_submit' c.pk %}">
+        {% csrf_token %}
+        <label>Justificação da submissão</label>
+        <textarea name="justification" rows="2" required></textarea>
+        <button type="submit">Submeter para revisão</button>
+        </form>
+    {% endif %}
+{% elif c.status == "REVIEW" and can_decide %}
+    <form method="post" action="{% url 'facilities:monitoring_criterion_decide' c.pk %}">
+    {% csrf_token %}
+    <label>Justificação da decisão</label>
+    <textarea name="justification" rows="2" required></textarea>
+    <label>Referência documental da aprovação</label>
+    <input name="reference" maxlength="180" placeholder="Obrigatória para aprovar">
+    <button name="action" value="APPROVE">Aprovar</button>
+    <button class="reject" name="action" value="REJECT">Devolver</button>
+    </form>
+{% elif c.status == "APPROVED" and can_decide %}
+    <form method="post" action="{% url 'facilities:monitoring_criterion_retire' c.pk %}">
+    {% csrf_token %}
+    <label>Justificação da retirada</label>
+    <textarea name="justification" rows="2" required></textarea>
+    <button class="reject" type="submit">Retirar critério</button>
+    </form>
+{% else %}
+    <small>Sem acções disponíveis</small>
+{% endif %}
+</td>
+</tr>
+{% empty %}
+<tr><td colspan="6">Ainda não existem critérios registados.</td></tr>
+{% endfor %}
+</tbody>
+</table>
+</div>
+</section>
+
+<section class="panel">
+<h2>Histórico de decisões e auditoria</h2>
+<div class="table-wrap">
+<table>
+<thead><tr><th>Data</th><th>Critério</th><th>Acção</th><th>Responsável</th><th>Justificação</th><th>Referência</th></tr></thead>
+<tbody>
+{% for log in logs %}
+<tr>
+<td>{{ log.performed_at|date:"d/m/Y H:i" }}</td>
+<td>{{ log.criterion }}</td>
+<td>{{ log.get_action_display }}</td>
+<td>{{ log.performed_by }}</td>
+<td>{{ log.justification }}</td>
+<td>{{ log.reference|default:"—" }}</td>
+</tr>
+{% empty %}
+<tr><td colspan="6">Ainda não existem decisões registadas.</td></tr>
+{% endfor %}
+</tbody>
+</table>
+</div>
+</section>
+<p><a href="{% url 'facilities:monitoring_dashboard' %}">← Voltar à monitorização</a></p>
+</main>
+</body>
+</html>

@@ -33,3 +33,4 @@ Thumbs.db
 
 # Permitir apenas o modelo de configuração, sem segredos
 !.env.example
+entgis/private_media/

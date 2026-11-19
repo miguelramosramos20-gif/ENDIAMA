@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{% if editing %}Editar{% else %}Configurar{% endif %} Critérios TARP | ENT-GIS</title>
+
+    <style>
+        * { box-sizing: border-box; }
+
+        body {
+            margin: 0;
+            background: #f1f5f9;
+            color: #172033;
+            font-family: Arial, sans-serif;
+        }
+
+        header {
+            background: #10243a;
+            color: white;
+            padding: 24px 5%;
+        }
+
+        header h1 {
+            margin: 0;
+            font-size: 23px;
+        }
+
+        header p {
+            color: #b8c8d8;
+            margin-bottom: 0;
+        }
+
+        main {
+            max-width: 1100px;
+            margin: 30px auto;
+            padding: 0 20px;
+        }
+
+        .panel {
+            background: white;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 25px;
+            margin-bottom: 20px;
+        }
+
+        .notice {
+            background: #fff7ed;
+            border-left: 4px solid #ea580c;
+            padding: 15px;
+            border-radius: 6px;
+            line-height: 1.5;
+            margin-bottom: 22px;
+        }
+
+        .fields {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 18px;
+        }
+
+        .field {
+            min-width: 0;
+        }
+
+        label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 7px;
+        }
+
+        input, select, textarea {
+            width: 100%;
+            padding: 11px;
+            border: 1px solid #cbd5e1;
+            border-radius: 7px;
+            background: white;
+            font-size: 14px;
+        }
+
+        textarea {
+            min-height: 90px;
+        }
+
+        h2 {
+            font-size: 18px;
+            margin-top: 28px;
+            border-bottom: 1px solid #e2e8f0;
+            padding-bottom: 12px;
+        }
+
+        .level {
+            padding: 17px;
+            border: 1px solid #e2e8f0;
+            border-radius: 9px;
+            margin-top: 13px;
+        }
+
+        .level h3 {
+            margin: 0 0 15px;
+            font-size: 15px;
+        }
+
+        .green { border-left: 5px solid #16a34a; }
+        .yellow { border-left: 5px solid #eab308; }
+        .orange { border-left: 5px solid #ea580c; }
+        .red { border-left: 5px solid #dc2626; }
+
+        .actions {
+            display: flex;
+            gap: 12px;
+            margin-top: 25px;
+            flex-wrap: wrap;
+        }
+
+        button, .back {
+            padding: 12px 20px;
+            border-radius: 7px;
+            text-decoration: none;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        button {
+            background: #14532d;
+            color: white;
+            border: 0;
+        }
+
+        .back {
+            background: #e2e8f0;
+            color: #172033;
+        }
+
+        .errors {
+            color: #b91c1c;
+            font-size: 13px;
+            margin-top: 6px;
+        }
+
+        @media(max-width: 650px) {
+            .fields { grid-template-columns: 1fr; }
+            .panel { padding: 17px; }
+        }
+    </style>
+</head>
+
+<body>
+
+<header>
+    <h1>ENT-GIS | Critérios de Monitorização</h1>
+    <p>{% if editing %}Edição controlada de critério em rascunho{% else %}Configuração técnica dos níveis de alerta e interpretação TARP{% endif %}</p>
+</header>
+
+<main>
+
+    <div class="notice">
+        <strong>Controlo técnico:</strong>
+        {% if editing %}
+            Está a alterar um critério em RASCUNHO. A alteração exige
+            justificação e ficará registada no histórico de auditoria.
+        {% else %}
+            Os critérios introduzidos são guardados como RASCUNHO.
+            Não serão utilizados na interpretação automática até à sua
+            aprovação formal pelos responsáveis autorizados.
+        {% endif %}
+    </div>
+
+    {% if messages %}
+        {% for message in messages %}
+            <div class="panel">{{ message }}</div>
+        {% endfor %}
+    {% endif %}
+
+    <form method="post">
+        {% csrf_token %}
+
+        <section class="panel">
+            <h2>1. Identificação do critério</h2>
+
+            {{ form.non_field_errors }}
+
+            <div class="fields">
+                {% for field in form %}
+                    {% if field.name == "facility" or field.name == "parameter" or field.name == "version" or field.name == "effective_from" %}
+                        <div class="field">
+                            <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                            {{ field }}
+                            {% if field.errors %}
+                                <div class="errors">{{ field.errors }}</div>
+                            {% endif %}
+                        </div>
+                    {% endif %}
+                {% endfor %}
+            </div>
+        </section>
+
+        <section class="panel">
+            <h2>2. Intervalos de interpretação TARP</h2>
+
+            {% for field in form %}
+                {% if field.name == "green_min" or field.name == "green_max" or field.name == "yellow_min" or field.name == "yellow_max" or field.name == "orange_min" or field.name == "orange_max" or field.name == "red_min" or field.name == "red_max" %}
+                    {% if field.name == "green_min" or field.name == "yellow_min" or field.name == "orange_min" or field.name == "red_min" %}
+                        <div class="level {% if field.name == 'green_min' %}green{% elif field.name == 'yellow_min' %}yellow{% elif field.name == 'orange_min' %}orange{% else %}red{% endif %}">
+                            <h3>
+                                {% if field.name == "green_min" %}VERDE — Normal{% endif %}
+                                {% if field.name == "yellow_min" %}AMARELO — Atenção{% endif %}
+                                {% if field.name == "orange_min" %}LARANJA — Alerta elevado{% endif %}
+                                {% if field.name == "red_min" %}VERMELHO — Alerta crítico{% endif %}
+                            </h3>
+                            <div class="fields">
+                    {% endif %}
+
+                    <div class="field">
+                        <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                        {{ field }}
+                        {% if field.errors %}
+                            <div class="errors">{{ field.errors }}</div>
+                        {% endif %}
+                    </div>
+
+                    {% if field.name == "green_max" or field.name == "yellow_max" or field.name == "orange_max" or field.name == "red_max" %}
+                            </div>
+                        </div>
+                    {% endif %}
+                {% endif %}
+            {% endfor %}
+
+            <p style="color:#64748b;font-size:13px;">
+                Os limites mínimos e máximos devem seguir os critérios
+                específicos aprovados para cada instalação.
+            </p>
+        </section>
+
+        <section class="panel">
+            <h2>3. Referência documental e observações</h2>
+
+            <div class="fields">
+                <div class="field">
+                    <label for="{{ form.source_document.id_for_label }}">Documento de referência</label>
+                    {{ form.source_document }}
+                    {{ form.source_document.errors }}
+                </div>
+
+                <div class="field">
+                    <label for="{{ form.notes.id_for_label }}">Notas técnicas</label>
+                    {{ form.notes }}
+                    {{ form.notes.errors }}
+                </div>
+            </div>
+
+            {% if editing %}
+                <div class="field" style="margin-top:18px;">
+                    <label for="id_justification">Justificação obrigatória da alteração</label>
+                    <textarea id="id_justification" name="justification" required></textarea>
+                </div>
+            {% endif %}
+
+            <div class="actions">
+                <button type="submit">{% if editing %}Guardar alterações{% else %}Guardar como rascunho{% endif %}</button>
+                <a class="back" href="{% url 'facilities:monitoring_criteria_list' %}">Voltar aos critérios</a>
+            </div>
+        </section>
+    </form>
+
+</main>
+</body>
+</html>

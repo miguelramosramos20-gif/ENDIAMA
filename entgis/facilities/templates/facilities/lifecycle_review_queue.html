@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Supervisão de Processos | ENT-GIS</title>
+<style>
+body{font-family:Arial,sans-serif;background:#f2f5f2;color:#24352b;margin:0}
+header{background:#123d2b;color:white;padding:22px 5%}
+main{max-width:1150px;margin:30px auto;padding:0 20px}
+.card{background:white;padding:20px;margin:12px 0;border-radius:8px}
+a{color:#17633f;font-weight:bold}
+small{color:#637268}
+</style>
+</head>
+<body>
+<header>
+<h1>ENDIAMA | Supervisão de Processos</h1>
+<p>Fila nacional de análise dos processos do ciclo de vida das instalações</p>
+</header>
+<main>
+<p><a href="/">Página institucional</a></p>
+<h2>Processos pendentes de decisão</h2>
+{% for item in submissions %}
+<div class="card">
+<h3>{{ item.facility.name }} — {{ item.facility.company.name }}</h3>
+<p>Fase: {{ item.get_lifecycle_stage_display }} | Revisão: {{ item.revision }}</p>
+<p>Estado: <strong>{{ item.get_status_display }}</strong></p>
+<p>Submetido por: {{ item.submitted_by|default:"Não indicado" }} |
+{{ item.submitted_at|date:"d/m/Y H:i" }}</p>
+<a href="{% url 'facilities:lifecycle_review_detail' item.pk %}">Abrir processo para análise</a>
+</div>
+{% empty %}
+<div class="card">Não existem processos pendentes de análise.</div>
+{% endfor %}
+</main>
+</body>
+</html>

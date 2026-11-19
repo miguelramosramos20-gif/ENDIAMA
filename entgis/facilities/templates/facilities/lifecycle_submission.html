@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Processo da Instalação | ENT-GIS</title>
+<style>
+body{font-family:Arial,sans-serif;background:#f2f5f2;color:#24352b;margin:0}
+header{background:#123d2b;color:white;padding:22px 5%}
+main{max-width:950px;margin:30px auto;padding:0 20px}
+.card{background:white;padding:22px;margin:15px 0;border-radius:8px}
+button{padding:11px 18px;margin:8px 8px 0 0;background:#17633f;color:white;border:0;border-radius:5px;cursor:pointer}
+input,select,textarea{max-width:100%;padding:7px}
+a{color:#17633f;font-weight:bold}
+.document{padding:12px;border-bottom:1px solid #ddd}
+.message{padding:10px;background:#e7f1e9;margin:8px 0}
+</style>
+</head>
+<body>
+<header>
+<h1>Portal da Empresa | ENT-GIS</h1>
+<p>Submissão de informação por fase do ciclo de vida</p>
+</header>
+<main>
+<p><a href="{% url 'facilities:company_portal' %}">Voltar às instalações</a></p>
+
+{% for message in messages %}
+<div class="message">{{ message }}</div>
+{% endfor %}
+
+<div class="card">
+<h2>{{ facility.name }}</h2>
+<p>Fase actual: <strong>{{ phase_label }}</strong></p>
+{% if submission %}
+<p>Revisão: {{ submission.revision }} |
+Estado: <strong>{{ submission.get_status_display }}</strong></p>
+{% if submission.review_notes %}
+<p>Observações da ENDIAMA: {{ submission.review_notes }}</p>
+{% endif %}
+{% else %}
+<p>Ainda não existe processo para esta fase. Guarde primeiro um rascunho.</p>
+{% endif %}
+</div>
+
+<div class="card">
+<h2>Dados do processo — {{ phase_label }}</h2>
+{% if can_edit %}
+<form method="post">
+{% csrf_token %}
+{{ form.as_p }}
+<button type="submit" name="action" value="draft">Guardar rascunho</button>
+<button type="submit" name="action" value="submit">Submeter à ENDIAMA</button>
+</form>
+{% else %}
+<fieldset disabled>{{ form.as_p }}</fieldset>
+<p>Este processo está bloqueado para edição ou o seu perfil permite apenas consulta.</p>
+{% endif %}
+</div>
+
+<div class="card">
+<h2>Documentos de suporte</h2>
+{% if documents %}
+    {% for document in documents %}
+    <div class="document">
+        <strong>{{ document.title }}</strong>
+        <p>Tipo: {{ document.document_type }} |
+        Referência: {{ document.reference|default:"Não indicada" }}</p>
+        <p>Carregado em: {{ document.uploaded_at|date:"d/m/Y H:i" }}
+        {% if document.uploaded_by %} por {{ document.uploaded_by }}{% endif %}</p>
+        <a href="{% url 'facilities:lifecycle_document_download' document.pk %}">Consultar / descarregar documento</a>
+    </div>
+    {% endfor %}
+{% else %}
+<p>Ainda não existem documentos anexados a esta revisão.</p>
+{% endif %}
+
+{% if can_edit and submission and submission.status == "DRAFT" %}
+<hr>
+<h3>Anexar documento ao rascunho</h3>
+<form method="post"
+      enctype="multipart/form-data"
+      action="{% url 'facilities:lifecycle_document_upload' submission.pk %}">
+    {% csrf_token %}
+    {{ document_form.as_p }}
+    <button type="submit">Carregar documento</button>
+</form>
+<p>Formatos aceites: PDF, DOCX, XLSX, JPG e PNG. Limite: 20 MB.</p>
+{% elif can_edit and not submission %}
+<p>Guarde primeiro o processo como rascunho para poder anexar documentos.</p>
+{% else %}
+<p>Os documentos desta revisão estão bloqueados para alterações.</p>
+{% endif %}
+</div>
+</main>
+</body>
+</html>

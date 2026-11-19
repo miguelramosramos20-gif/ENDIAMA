@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ENT-GIS | Gestão de Eventos TARP</title>
+<style>
+:root {
+    --navy:#10243a;
+    --blue:#2878b9;
+    --bg:#f3f6fa;
+    --text:#1c2b3b;
+    --muted:#748396;
+    --border:#e5ebf1;
+    --green:#16866a;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);
+font-family:Inter,"Segoe UI",Arial,sans-serif}
+a{text-decoration:none}
+.sidebar{position:fixed;inset:0 auto 0 0;width:245px;
+background:var(--navy);color:white;padding:25px 17px}
+.brand{font-size:21px;font-weight:800;letter-spacing:1px;
+padding:5px 9px 25px;border-bottom:1px solid #ffffff20}
+.brand small{display:block;font-size:9px;color:#a9bdce;
+letter-spacing:.8px;margin-top:5px}
+.nav-label{font-size:10px;color:#8fa6b9;letter-spacing:1px;
+margin:27px 10px 10px;text-transform:uppercase}
+.nav-link{display:block;padding:12px 13px;border-radius:8px;
+color:#c5d2de;font-size:13px;margin:3px 0}
+.nav-link:hover,.nav-link.active{background:#214766;color:white}
+.main{margin-left:245px;min-height:100vh}
+.topbar{height:65px;background:white;border-bottom:1px solid var(--border);
+display:flex;align-items:center;justify-content:space-between;padding:0 35px}
+.crumb{font-size:12px;color:var(--muted)}
+.status{font-size:11px;background:#fff7e8;color:#856526;
+padding:8px 12px;border-radius:20px}
+.content{max-width:1500px;margin:auto;padding:32px 35px}
+.eyebrow{font-size:10px;color:var(--blue);font-weight:800;
+letter-spacing:1.4px;text-transform:uppercase}
+h1{font-size:26px;margin:9px 0}
+.description{font-size:13px;color:var(--muted);line-height:1.6}
+.kpis{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:12px;
+margin:25px 0}
+.kpi,.panel,.event-card{background:white;border:1px solid var(--border);
+border-radius:13px;padding:18px;box-shadow:0 3px 14px #142a4108}
+.kpi small{font-size:11px;color:var(--muted)}
+.kpi strong{display:block;font-size:27px;color:var(--navy);margin-top:9px}
+.panel{margin:18px 0}
+.panel h2{font-size:15px;margin:0 0 15px}
+.filters{display:grid;grid-template-columns:repeat(5,minmax(130px,1fr));
+gap:12px;align-items:end}
+label{display:block;font-size:11px;color:#526477;margin-bottom:6px}
+input,select,textarea{width:100%;padding:10px;border:1px solid var(--border);
+border-radius:7px;background:white;color:var(--text);font:12px inherit}
+textarea{min-height:65px;resize:vertical}
+button,.btn{display:inline-block;border:0;border-radius:7px;
+padding:10px 13px;background:var(--blue);color:white;
+font-size:11px;cursor:pointer}
+.btn-secondary{background:white;color:var(--navy);
+border:1px solid var(--border)}
+.event-card{margin:14px 0;padding:20px}
+.event-head{display:flex;justify-content:space-between;
+gap:15px;flex-wrap:wrap;align-items:center}
+.event-title{font-size:15px;font-weight:750;color:var(--navy)}
+.meta{font-size:11px;color:var(--muted);line-height:1.8;margin-top:8px}
+.pills{display:flex;gap:7px;flex-wrap:wrap}
+.pill{font-size:10px;padding:6px 9px;border-radius:20px;
+background:#edf2f7;color:#42556a}
+.pill.red{background:#fde8e7;color:#a52e29}
+.pill.orange{background:#fff0dc;color:#98601c}
+.pill.yellow{background:#fff8d9;color:#806515}
+.pill.green{background:#e3f4ed;color:#176b51}
+.event-card.overdue{border:1px solid #d94a43;box-shadow:0 3px 14px #d94a4318}
+.overdue-label{display:inline-block;margin-left:7px;padding:5px 9px;
+border-radius:20px;background:#fde8e7;color:#a52e29;
+font-size:10px;font-weight:800}
+.meta.overdue{color:#a52e29;font-weight:700}
+.event-description{font-size:12px;line-height:1.6;
+background:#f7f9fc;padding:12px;border-radius:8px;margin:14px 0}
+.action-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));
+gap:12px;margin-top:15px}
+.action-box{border:1px solid var(--border);border-radius:9px;padding:13px}
+.action-box h3{font-size:12px;margin:0 0 12px}
+.action-box form{display:grid;gap:9px}
+.history{border-top:1px solid var(--border);margin-top:17px;padding-top:13px}
+.history summary{font-size:12px;font-weight:700;cursor:pointer}
+.history-item{font-size:11px;line-height:1.6;padding:9px 0;
+border-bottom:1px solid #eef1f5;color:#526477}
+.message{padding:12px 15px;border-radius:8px;margin:10px 0;
+font-size:12px;background:#e8f2fb;color:#244c70}
+.message.error{background:#fdebea;color:#943c35}
+.message.success{background:#e4f4ec;color:#176b51}
+.empty{padding:35px;text-align:center;color:var(--muted);font-size:13px}
+.note{margin-top:18px;background:#fff9ec;border:1px solid #f0e1bd;
+padding:14px 16px;border-radius:9px;font-size:11px;
+line-height:1.7;color:#75613a}
+@media(max-width:1100px){
+.kpis{grid-template-columns:repeat(3,1fr)}
+.filters{grid-template-columns:repeat(3,1fr)}
+.action-grid{grid-template-columns:1fr}
+}
+@media(max-width:800px){
+.sidebar{position:relative;width:100%;padding:15px}
+.nav-label{display:none}
+.sidebar nav{display:flex;overflow-x:auto;gap:5px;margin-top:10px}
+.nav-link{white-space:nowrap}
+.main{margin-left:0}
+.content{padding:24px 16px}
+.topbar{padding:0 16px}
+}
+@media(max-width:550px){
+.kpis{grid-template-columns:repeat(2,1fr)}
+.filters{grid-template-columns:1fr 1fr}
+h1{font-size:22px}
+}
+</style>
+</head>
+<body>
+
+<aside class="sidebar">
+    <div class="brand">ENT-GIS
+        <small>ENDIAMA NATIONAL TAILINGS GIS</small>
+    </div>
+    <div class="nav-label">Plataforma nacional</div>
+    <nav>
+        <a class="nav-link" href="/">▦ &nbsp; Painel Nacional</a>
+        <a class="nav-link" href="/mapa/">◎ &nbsp; Mapa Geográfico</a>
+        <a class="nav-link" href="/admin/">▤ &nbsp; Cadastro Nacional</a>
+    </nav>
+    <div class="nav-label">Gestão e controlo</div>
+    <nav>
+        <a class="nav-link" href="/territorio/">⌖ &nbsp; Distribuição Territorial</a>
+        <a class="nav-link" href="/seguranca/">⬡ &nbsp; Segurança GISTM</a>
+        <a class="nav-link" href="/operacoes/">◷ &nbsp; Estado Operacional</a>
+        <a class="nav-link active" href="{% url 'facilities:tarp_events_dashboard' %}">
+            ⚑ &nbsp; Eventos TARP
+        </a>
+        <a class="nav-link" href="{% url 'facilities:monitoring_dashboard' %}">
+            ◉ &nbsp; Monitorização
+        </a>
+    </nav>
+</aside>
+
+<div class="main">
+<header class="topbar">
+    <div class="crumb">ENT-GIS / <strong>Gestão de Eventos TARP</strong></div>
+    <div class="status">● Ambiente de desenvolvimento</div>
+</header>
+
+<main class="content">
+    <div class="eyebrow">Segurança e gestão de riscos</div>
+    <h1>Painel Nacional de Eventos TARP</h1>
+    <p class="description">
+        Monitorização dos alertas, decisões de resposta e histórico
+        operacional por instalação e estrutura associada.
+    </p>
+
+    {% if messages %}
+        {% for message in messages %}
+        <div class="message {{ message.tags }}">{{ message }}</div>
+        {% endfor %}
+    {% endif %}
+
+    <section class="kpis">
+        <article class="kpi"><small>Total de eventos</small>
+            <strong>{{ total_events }}</strong></article>
+        <article class="kpi"><small>Eventos abertos</small>
+            <strong>{{ open_events }}</strong></article>
+        <article class="kpi"><small>Reconhecidos</small>
+            <strong>{{ acknowledged_events }}</strong></article>
+        <article class="kpi"><small>Aguardam resposta</small>
+            <strong>{{ awaiting_response }}</strong></article>
+        <article class="kpi"><small>Eventos L4 não encerrados</small>
+            <strong>{{ critical_events }}</strong></article>
+        <article class="kpi"><small>Eventos em atraso</small>
+            <strong>{{ overdue_events }}</strong></article>
+    </section>
+
+    <section class="panel">
+        <h2>Filtros nacionais</h2>
+        <form method="get" class="filters">
+            <div>
+                <label>Empresa mineira</label>
+                <select name="company">
+                    <option value="">Todas</option>
+                    {% for company in companies %}
+                    <option value="{{ company.id }}"
+                    {% if filters.company == company.id|stringformat:"s" %}selected{% endif %}>
+                        {{ company.name }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div>
+                <label>Barragem / instalação</label>
+                <select name="facility">
+                    <option value="">Todas</option>
+                    {% for facility in facilities %}
+                    <option value="{{ facility.id }}"
+                    {% if filters.facility == facility.id|stringformat:"s" %}selected{% endif %}>
+                        {{ facility.name }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div>
+                <label>Nível de alerta</label>
+                <select name="trigger_level">
+                    <option value="">Todos</option>
+                    <option value="L1" {% if filters.trigger_level == "L1" %}selected{% endif %}>L1 — Referência</option>
+                    <option value="L2" {% if filters.trigger_level == "L2" %}selected{% endif %}>L2 — Atenção</option>
+                    <option value="L3" {% if filters.trigger_level == "L3" %}selected{% endif %}>L3 — Alerta elevado</option>
+                    <option value="L4" {% if filters.trigger_level == "L4" %}selected{% endif %}>L4 — Alerta máximo</option>
+                </select>
+            </div>
+            <div>
+                <label>Nível de resposta</label>
+                <select name="response_level">
+                    <option value="">Todos</option>
+                    <option value="S1" {% if filters.response_level == "S1" %}selected{% endif %}>S1 — Rotina</option>
+                    <option value="S2" {% if filters.response_level == "S2" %}selected{% endif %}>S2 — Vigilância reforçada</option>
+                    <option value="S3" {% if filters.response_level == "S3" %}selected{% endif %}>S3 — Alerta</option>
+                    <option value="S4" {% if filters.response_level == "S4" %}selected{% endif %}>S4 — Crítico</option>
+                </select>
+            </div>
+            <div>
+                <label>Estado</label>
+                <select name="status">
+                    <option value="">Todos</option>
+                    <option value="OPEN" {% if filters.status == "OPEN" %}selected{% endif %}>Aberto</option>
+                    <option value="ACKNOWLEDGED" {% if filters.status == "ACKNOWLEDGED" %}selected{% endif %}>Reconhecido</option>
+                    <option value="CLOSED" {% if filters.status == "CLOSED" %}selected{% endif %}>Encerrado</option>
+                </select>
+            </div>
+            <div>
+                <button type="submit">Aplicar filtros</button>
+                <a class="btn btn-secondary" href="{% url 'facilities:tarp_events_dashboard' %}">Limpar</a>
+            </div>
+        </form>
+    </section>
+
+    <section class="panel">
+        <h2>Relatórios TARP por barragem</h2>
+        <p class="description">
+            Consulte os indicadores, eventos, níveis de alerta, respostas
+            operacionais e histórico de auditoria de cada instalação autorizada.
+        </p>
+
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px;">
+            {% for facility in facilities %}
+            <div class="event-card">
+                <div class="event-title">{{ facility.name }}</div>
+                <div class="meta">
+                    Empresa: {{ facility.company.name }}<br>
+                    {% if facility.province %}Província: {{ facility.province }}{% endif %}
+                </div>
+                <div style="margin-top:14px;">
+                    <a class="btn btn-secondary"
+                       href="{% url 'facilities:tarp_facility_report' facility.id %}">
+                        Consultar relatório TARP
+                    </a>
+                </div>
+            </div>
+            {% empty %}
+            <div class="empty">
+                Não existem barragens disponíveis para consulta.
+            </div>
+            {% endfor %}
+        </div>
+    </section>
+
+    <section>
+        <h2>Registo de eventos</h2>
+        <p class="description">
+            A apresentar {{ displayed_events_count }} de {{ total_events }} eventos filtrados.
+            A lista apresenta no máximo os 200 eventos mais recentes.
+        </p>
+
+        {% for event in events %}
+        <article class="event-card{% if event.due_at and event.due_at < now and event.status != 'CLOSED' %} overdue{% endif %}">
+            <div class="event-head">
+                <div>
+                    <div class="event-title">
+                        {{ event.facility.name }}
+                        {% if event.associated_structure %}
+                        — {{ event.associated_structure.name }}
+                        {% endif %}
+                    </div>
+                    <div class="meta">
+                        Empresa: {{ event.facility.company.name }}<br>
+                        Abertura: {{ event.opened_at|date:"d/m/Y H:i" }}<br>
+                        {% if event.reading %}
+                        Variável: {{ event.reading.parameter.name }} |
+                        Valor: {{ event.reading.value }} {{ event.reading.unit }}
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="pills">
+                    <span class="pill {% if event.trigger_level == 'L4' %}red{% elif event.trigger_level == 'L3' %}orange{% elif event.trigger_level == 'L2' %}yellow{% endif %}">
+                        Alerta {{ event.get_trigger_level_display|default:"Por classificar" }}
+                    </span>
+                    <span class="pill {% if event.response_level == 'S4' %}red{% elif event.response_level == 'S3' %}orange{% elif event.response_level == 'S2' %}yellow{% endif %}">
+                        Resposta: {{ event.get_response_level_display|default:"Pendente" }}
+                    </span>
+                    <span class="pill {% if event.status == 'CLOSED' %}green{% elif event.status == 'OPEN' %}orange{% endif %}">
+                        {{ event.get_status_display }}
+                    </span>
+                </div>
+            </div>
+
+            <div class="event-description">
+                {{ event.trigger_description }}
+            </div>
+
+            {% if event.responsible %}
+            <div class="meta">Responsável: {{ event.responsible }}</div>
+            {% endif %}
+
+            {% if event.due_at %}
+            <div class="meta{% if event.due_at < now and event.status != 'CLOSED' %} overdue{% endif %}">
+                Prazo: {{ event.due_at|date:"d/m/Y H:i" }}
+                {% if event.due_at < now and event.status != 'CLOSED' %}
+                    <span class="overdue-label">PRAZO ULTRAPASSADO</span>
+                {% endif %}
+            </div>
+            {% endif %}
+
+            {% if can_manage_tarp and event.status != "CLOSED" %}
+            <div class="action-grid">
+
+                {% if event.status == "OPEN" %}
+                <div class="action-box">
+                    <h3>Reconhecer evento</h3>
+                    <form method="post" action="{% url 'facilities:tarp_event_action' event.id %}">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="acknowledge">
+                        <textarea name="details" required placeholder="Registe a avaliação inicial e a justificação do reconhecimento."></textarea>
+                        <button type="submit">Reconhecer evento</button>
+                    </form>
+                </div>
+                {% endif %}
+
+                {% if event.status == "ACKNOWLEDGED" %}
+                <div class="action-box">
+                    <h3>Atribuir ou actualizar resposta operacional</h3>
+                    <form method="post" action="{% url 'facilities:tarp_event_action' event.id %}">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="assign_response">
+                        <select name="response_level" required>
+                            <option value="">Seleccionar S1–S4</option>
+                            <option value="S1" {% if event.response_level == "S1" %}selected{% endif %}>S1 — Rotina</option>
+                            <option value="S2" {% if event.response_level == "S2" %}selected{% endif %}>S2 — Vigilância reforçada</option>
+                            <option value="S3" {% if event.response_level == "S3" %}selected{% endif %}>S3 — Alerta</option>
+                            <option value="S4" {% if event.response_level == "S4" %}selected{% endif %}>S4 — Crítico</option>
+                        </select>
+                        <input type="text" name="responsible" value="{{ event.responsible }}" placeholder="Responsável pela resposta" required>
+                        <textarea name="details" required placeholder="Fundamentação técnica da resposta seleccionada."></textarea>
+                        <button type="submit">Registar resposta</button>
+                    </form>
+                </div>
+                {% endif %}
+
+                {% if event.status == "ACKNOWLEDGED" and event.response_level %}
+                <div class="action-box">
+                    <h3>Encerrar evento</h3>
+                    <form method="post" action="{% url 'facilities:tarp_event_action' event.id %}">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="close">
+                        <textarea name="details" required placeholder="Descreva as acções executadas, evidências e fundamento para encerramento."></textarea>
+                        <button type="submit">Encerrar com justificação</button>
+                    </form>
+                </div>
+                {% endif %}
+
+            </div>
+            {% endif %}
+
+            <details class="history">
+                <summary>Histórico de auditoria do evento</summary>
+                {% for log in event.history.all %}
+                <div class="history-item">
+                    <strong>{{ log.get_action_display|default:log.action }}</strong>
+                    — {{ log.performed_by.username }}
+                    — {{ log.performed_at|date:"d/m/Y H:i" }}<br>
+                    {{ log.details }}
+                </div>
+                {% empty %}
+                <p class="meta">Ainda não existem acções registadas no histórico.</p>
+                {% endfor %}
+            </details>
+        </article>
+        {% empty %}
+        <div class="panel empty">
+            Não existem eventos TARP para os filtros seleccionados.
+        </div>
+        {% endfor %}
+    </section>
+
+    <div class="note">
+        <strong>Nota de governação:</strong>
+        L1–L4 representam níveis de alerta e S1–S4 representam níveis de resposta.
+        A atribuição da resposta exige avaliação autorizada. O encerramento exige
+        reconhecimento, resposta atribuída e justificação. A activação do PAE
+        permanece uma decisão humana segundo os procedimentos aprovados.
+    </div>
+</main>
+
+<footer style="padding:20px 35px;border-top:1px solid var(--border);
+font-size:10px;color:var(--muted)">
+    ENDIAMA EP | ENT-GIS | Gestão de Segurança de Rejeitados
+</footer>
+</div>
+</body>
+</html>

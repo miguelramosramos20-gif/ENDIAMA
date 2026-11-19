@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="pt"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ENT-GIS | Compliance GISTM</title>
+<style>
+body{margin:0;background:#f3f6fa;color:#1c2b3b;font-family:Segoe UI,Arial}header{background:#10243a;color:white;padding:25px 5%}
+main{max-width:1400px;margin:28px auto;padding:0 22px}.muted{color:#748396;font-size:12px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(175px,1fr));gap:14px;margin:20px 0}
+.card,.panel{background:white;border:1px solid #e5ebf1;border-radius:12px;padding:18px}
+.label{color:#748396;font-size:12px}.num{font-size:28px;font-weight:750;margin-top:8px}
+.note{background:#fff8e8;border:1px solid #f0dfb9;border-radius:9px;padding:13px;font-size:12px;line-height:1.6}
+table{width:100%;border-collapse:collapse;min-width:850px}th,td{text-align:left;padding:11px;border-bottom:1px solid #e5ebf1;font-size:12px}
+th{background:#f7f9fc;color:#64748b}.scroll{overflow-x:auto}a{color:#2878b9;text-decoration:none;font-weight:650}
+.sim{color:#855b12;background:#fff1ce;padding:4px 7px;border-radius:15px;font-size:10px}
+</style></head><body>
+<header><h1>ENT-GIS | Compliance GISTM</h1><div>Painel nacional de conformidade por instalação de rejeitados</div></header>
+<main>
+<h2>Visão nacional</h2>
+<p class="muted">Cada instalação mantém avaliação e histórico próprios.</p>
+<div class="note"><b>Metodologia:</b> conformidade = requisitos conformes / requisitos avaliados (conformes, parciais e não conformes). Cobertura = requisitos avaliados / requisitos aplicáveis. Não avaliados e em validação não contam como conformes. Este indicador não representa segurança física nem certificação GISTM.</div>
+<section class="grid">
+<div class="card"><div class="label">Instalações registadas</div><div class="num">{{ facility_count }}</div></div>
+<div class="card"><div class="label">Requisitos catalogados</div><div class="num">{{ active_requirements }}/77</div></div>
+<div class="card"><div class="label">Conformidade agregada</div><div class="num">{% if national_compliance != None %}{{ national_compliance }}%{% else %}—{% endif %}</div><div class="muted">{{ evaluated_total }} avaliados</div></div>
+<div class="card"><div class="label">Cobertura nacional</div><div class="num">{% if national_coverage != None %}{{ national_coverage }}%{% else %}—{% endif %}</div></div>
+<div class="card"><div class="label">Parcialmente conformes</div><div class="num">{{ totals.partial }}</div></div>
+<div class="card"><div class="label">Não conformes</div><div class="num">{{ totals.non_conformant }}</div></div>
+</section>
+<section class="panel"><h3>Estado por instalação</h3><div class="scroll"><table>
+<thead><tr><th>Instalação</th><th>Sociedade</th><th>Província</th><th>Avaliação</th><th>Conformes</th><th>Parciais</th><th>Não conformes</th><th>Não avaliados</th><th>Compliance</th><th>Cobertura</th><th></th></tr></thead><tbody>
+{% for r in rows %}<tr><td><b>{{ r.facility.name }}</b>{% if r.simulated %}<br><span class="sim">SIMULADO</span>{% endif %}</td><td>{{ r.facility.company.name }}</td><td>{{ r.facility.province }}</td><td>{% if r.assessment %}v{{ r.assessment.version }} · {{ r.assessment.get_status_display }}{% else %}Não iniciada{% endif %}</td><td>{{ r.counts.conformant }}</td><td>{{ r.counts.partial }}</td><td>{{ r.counts.non_conformant }}</td><td>{{ r.counts.not_assessed }}</td><td>{% if r.compliance != None %}{{ r.compliance }}%{% else %}—{% endif %}</td><td>{% if r.coverage != None %}{{ r.coverage }}%{% else %}—{% endif %}</td><td><a href="{% url 'facilities:compliance_facility' r.facility.id %}">Abrir ficha →</a></td></tr>
+{% empty %}<tr><td colspan="11">Não existem instalações registadas.</td></tr>{% endfor %}
+</tbody></table></div></section>
+<p class="muted">A validação independente e a certificação devem seguir os processos e qualificações aplicáveis.</p>
+<a href="/">← Painel principal</a>
+</main></body></html>

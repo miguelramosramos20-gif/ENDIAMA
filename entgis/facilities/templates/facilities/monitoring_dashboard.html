@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ENT-GIS | Monitorização Operacional</title>
+<style>
+body{margin:0;background:#f1f5f9;color:#172b4d;font-family:Arial,sans-serif}
+header{background:#102b46;color:white;padding:22px 5%}
+main{max-width:1250px;margin:28px auto;padding:0 20px}
+h1{margin:0 0 7px;font-size:25px} .muted{color:#64748b}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:15px;margin:22px 0}
+.card,.panel{background:white;border:1px solid #e2e8f0;border-radius:12px;padding:20px}
+.number{font-size:30px;font-weight:700;margin-top:10px}
+.actions{display:flex;gap:10px;flex-wrap:wrap;margin:20px 0}
+a.btn{background:#075b9a;color:white;padding:11px 16px;border-radius:7px;text-decoration:none}
+a.secondary{background:#e2e8f0;color:#17324d}
+table{width:100%;border-collapse:collapse;background:white}
+th,td{text-align:left;padding:11px;border-bottom:1px solid #e2e8f0;font-size:13px}
+th{background:#f8fafc}
+.tag{font-weight:bold}
+@media(max-width:650px){main{padding:0 12px}.panel{overflow-x:auto}}
+</style>
+</head>
+<body>
+<header>
+  <h1>ENT-GIS | Monitorização Operacional</h1>
+  <div>Registo, acompanhamento e interpretação de desempenho das barragens de rejeitados</div>
+</header>
+<main>
+  <p class="muted">Painel nacional de monitorização. A classificação depende dos critérios aprovados e vigentes para cada instalação.</p>
+  <div class="actions">
+    <a class="btn" href="{% url 'facilities:monitoring_entry' %}">+ Registar leitura</a>
+    <a class="btn secondary" href="{% url 'facilities:monitoring_history' %}">Consultar histórico</a>
+    <a class="btn secondary" href="/">Painel principal</a>
+  </div>
+  <section class="grid">
+    <div class="card">Leituras registadas<div class="number">{{ total_readings }}</div></div>
+    <div class="card">Alertas abertos<div class="number">{{ open_alerts }}</div></div>
+    <div class="card">Critérios por configurar<div class="number">{{ unconfigured }}</div></div>
+    <div class="card">Nível Vermelho<div class="number">{{ red_count }}</div></div>
+    <div class="card">Nível Laranja<div class="number">{{ orange_count }}</div></div>
+    <div class="card">Nível Amarelo<div class="number">{{ yellow_count }}</div></div>
+  </section>
+  <section class="panel">
+    <h2>Últimas leituras</h2>
+    <table>
+      <thead><tr><th>Data da medição</th><th>Instalação</th><th>Variável</th><th>Valor</th><th>Interpretação</th></tr></thead>
+      <tbody>
+      {% for r in latest_readings %}
+        <tr>
+          <td>{{ r.observed_at|date:"d/m/Y H:i" }}</td>
+          <td>{{ r.facility.name }}</td>
+          <td>{{ r.parameter.name }}</td>
+          <td>{{ r.value }} {{ r.unit }}</td>
+          <td>{{ r.get_interpretation_display }}</td>
+        </tr>
+      {% empty %}
+        <tr><td colspan="5">Ainda não existem leituras registadas.</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </section>
+  <section class="panel" style="margin-top:20px">
+    <h2>Alertas por tratar</h2>
+    <table>
+      <thead><tr><th>Data</th><th>Instalação</th><th>Variável</th><th>Nível</th><th>Estado</th></tr></thead>
+      <tbody>
+      {% for a in open_alert_list %}
+        <tr>
+          <td>{{ a.created_at|date:"d/m/Y H:i" }}</td>
+          <td>{{ a.reading.facility.name }}</td>
+          <td>{{ a.reading.parameter.name }}</td>
+          <td>{{ a.get_severity_display|default:a.severity }}</td>
+          <td>{{ a.get_status_display }}</td>
+        </tr>
+      {% empty %}
+        <tr><td colspan="5">Não existem alertas abertos.</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </section>
+</main>
+</body>
+</html>

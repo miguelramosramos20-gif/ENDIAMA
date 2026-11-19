@@ -144,3 +144,8 @@ MAILERS = {
         "BACKEND": "django.core.mail.backends.console.EmailBackend",
     },
 }
+
+
+# ENT-GIS — armazenamento privado de documentos.
+# Não configurar MEDIA_URL nem servir estes ficheiros publicamente.
+MEDIA_ROOT = BASE_DIR / "private_media"
