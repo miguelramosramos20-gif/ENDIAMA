@@ -4,6 +4,10 @@ from . import views, portal_views
 app_name = "facilities"
 
 urlpatterns = [
+    path("acessos/", views.access_hub, name="access_hub"),
+    path("instalacoes/", views.installations_hub, name="installations_hub"),
+    path("relatorios/", views.reports_hub, name="reports_hub"),
+    path("maturidade-gistm/", views.maturity_hub, name="maturity_hub"),
     path("portal/empresa/", portal_views.company_portal, name="company_portal"),
     path(
         "portal/empresa/processo/<int:submission_id>/documento/",
@@ -46,4 +50,5 @@ urlpatterns = [
     path("monitorizacao/", views.monitoring_dashboard, name="monitoring_dashboard"),
     path("monitorizacao/registar/", views.monitoring_entry, name="monitoring_entry"),
     path("monitorizacao/historico/", views.monitoring_history, name="monitoring_history"),
+    path("monitorizacao/alertas/<int:alert_id>/acao/", views.monitoring_alert_action, name="monitoring_alert_action"),
 ]

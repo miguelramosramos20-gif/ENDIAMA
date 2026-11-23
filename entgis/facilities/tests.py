@@ -22,6 +22,7 @@ from facilities.models import (
     MonitoringParameter,
     MonitoringCriterion,
     MonitoringAlert,
+    MonitoringAlertLog,
     MonitoringReading,
     CriterionApprovalLog,
     GISTMAssessment,
@@ -35,6 +36,12 @@ from facilities.services.lifecycle import change_lifecycle_stage
 from facilities.services.monitoring import (
     interpret_reading,
     create_monitoring_alert,
+)
+from facilities.services.monitoring_alerts import (
+    acknowledge_monitoring_alert,
+    assign_monitoring_alert,
+    record_monitoring_alert_action,
+    close_monitoring_alert,
 )
 from facilities.services.tarp import interpret_tarp_reading
 
@@ -2344,4 +2351,285 @@ class TARPViewAuthorizationTests(LifecycleTestBase):
                 "RESPONSE_REASSIGNED",
                 "CLOSED",
             ],
+        )
+
+
+class MonitoringAlertWorkflowTests(LifecycleTestBase):
+    """Testes do ciclo de vida e da auditoria dos alertas."""
+
+    def setUp(self):
+        super().setUp()
+
+        self.parameter = MonitoringParameter.objects.create(
+            code="ALERT-WORKFLOW-TEST",
+            name="Variável de teste do ciclo de alertas",
+            category="GEOTECHNICAL",
+            unit="mm",
+            instrument_required=False,
+            is_active=True,
+        )
+
+    def create_alert(self, facility=None, company=None):
+        facility = facility or self.facility
+
+        reading = MonitoringReading.objects.create(
+            facility=facility,
+            parameter=self.parameter,
+            observed_at=timezone.now(),
+            value=Decimal("8"),
+            unit="mm",
+            interpretation="YELLOW",
+            entered_by=self.staff,
+        )
+
+        alert = create_monitoring_alert(reading)
+
+        self.assertIsNotNone(alert)
+        return alert
+
+    def test_fluxo_completo_do_alerta_e_historico(self):
+        alert = self.create_alert()
+
+        self.assertEqual(alert.status, "OPEN")
+        self.assertEqual(
+            alert.audit_history.count(),
+            1,
+        )
+        self.assertEqual(
+            alert.audit_history.first().action,
+            "CREATED",
+        )
+
+        alert = acknowledge_monitoring_alert(
+            alert,
+            self.editor,
+            "Alerta analisado pela equipa técnica.",
+        )
+        self.assertEqual(alert.status, "ACKNOWLEDGED")
+        self.assertIsNotNone(alert.acknowledged_at)
+
+        alert = assign_monitoring_alert(
+            alert,
+            self.editor,
+            "Engenheiro responsável de turno",
+            "Responsabilidade atribuída para investigação.",
+        )
+        self.assertEqual(
+            alert.responsible,
+            "Engenheiro responsável de turno",
+        )
+
+        alert = record_monitoring_alert_action(
+            alert,
+            self.editor,
+            "Inspecção do instrumento e verificação da leitura.",
+        )
+        self.assertIn(
+            "Inspecção do instrumento",
+            alert.action_taken,
+        )
+
+        alert = close_monitoring_alert(
+            alert,
+            self.editor,
+            "Condição avaliada e medidas correctivas concluídas.",
+        )
+
+        self.assertEqual(alert.status, "CLOSED")
+        self.assertIsNotNone(alert.closed_at)
+        self.assertEqual(alert.responsible, "Engenheiro responsável de turno")
+        self.assertIn("Justificação de encerramento", alert.action_taken)
+
+        actions = list(
+            alert.audit_history.order_by("pk").values_list(
+                "action",
+                flat=True,
+            )
+        )
+        self.assertEqual(
+            actions,
+            [
+                "CREATED",
+                "ACKNOWLEDGED",
+                "ASSIGNED",
+                "ACTION_RECORDED",
+                "CLOSED",
+            ],
+        )
+
+        closing_log = alert.audit_history.get(action="CLOSED")
+        self.assertEqual(closing_log.performed_by, self.editor)
+        self.assertEqual(closing_log.status_before, "ACKNOWLEDGED")
+        self.assertEqual(closing_log.status_after, "CLOSED")
+
+    def test_transicoes_invalidas_sao_rejeitadas(self):
+        alert = self.create_alert()
+
+        with self.assertRaises(ValidationError):
+            record_monitoring_alert_action(
+                alert,
+                self.editor,
+                "Tentativa de intervenção antes do reconhecimento.",
+            )
+
+        with self.assertRaises(ValidationError):
+            close_monitoring_alert(
+                alert,
+                self.editor,
+                "Tentativa de encerramento antes do reconhecimento.",
+            )
+
+        acknowledge_monitoring_alert(
+            alert,
+            self.editor,
+            "Alerta reconhecido para análise.",
+        )
+
+        with self.assertRaises(ValidationError):
+            acknowledge_monitoring_alert(
+                alert,
+                self.editor,
+                "Tentativa de reconhecimento duplicado.",
+            )
+
+        self.assertEqual(
+            alert.audit_history.filter(action="ACKNOWLEDGED").count(),
+            1,
+        )
+
+    def test_encerramento_exige_responsavel_atribuido(self):
+        alert = self.create_alert()
+
+        alert = acknowledge_monitoring_alert(
+            alert,
+            self.editor,
+            "Alerta reconhecido.",
+        )
+
+        with self.assertRaises(ValidationError):
+            close_monitoring_alert(
+                alert,
+                self.editor,
+                "Tentativa de encerramento sem responsável.",
+            )
+
+        alert.refresh_from_db()
+        self.assertEqual(alert.status, "ACKNOWLEDGED")
+        self.assertIsNone(alert.closed_at)
+        self.assertFalse(
+            alert.audit_history.filter(action="CLOSED").exists()
+        )
+
+    def test_historico_de_auditoria_e_imutavel(self):
+        alert = self.create_alert()
+        log = alert.audit_history.first()
+
+        log.details = "Tentativa de alteração do histórico."
+        with self.assertRaises(ValidationError):
+            log.save()
+
+        with self.assertRaises(ValidationError):
+            log.delete()
+
+        with self.assertRaises(ValidationError):
+            MonitoringAlertLog.objects.filter(
+                pk=log.pk
+            ).update(details="Alteração em massa.")
+
+        with self.assertRaises(ValidationError):
+            MonitoringAlertLog.objects.filter(
+                pk=log.pk
+            ).delete()
+
+        with self.assertRaises(ValidationError):
+            MonitoringAlertLog.objects.bulk_update(
+                [log],
+                ["details"],
+            )
+
+        new_log = MonitoringAlertLog(
+            alert=alert,
+            action="CREATED",
+            details="Tentativa de inserção em massa.",
+        )
+        with self.assertRaises(ValidationError):
+            MonitoringAlertLog.objects.bulk_create([new_log])
+
+        log.refresh_from_db()
+        self.assertNotEqual(
+            log.details,
+            "Tentativa de alteração do histórico.",
+        )
+        self.assertEqual(
+            alert.audit_history.count(),
+            1,
+        )
+
+    def test_empresa_nao_pode_gerir_alerta_de_outra_empresa(self):
+        other_company = MiningCompany.objects.create(
+            name="Outra Empresa ENT-GIS",
+            country="Angola",
+            province="Lunda Sul",
+            is_simulated=True,
+        )
+
+        other_facility = TailingsFacility.objects.create(
+            company=other_company,
+            name="Instalação de Outra Empresa",
+            province="Lunda Sul",
+            municipality="Saurimo",
+            lifecycle_stage="CONSTRUCTION",
+            is_simulated=True,
+        )
+
+        other_alert = self.create_alert(facility=other_facility)
+
+        self.client.force_login(self.editor)
+
+        response = self.client.post(
+            reverse(
+                "facilities:monitoring_alert_action",
+                args=[other_alert.pk],
+            ),
+            {
+                "action": "acknowledge",
+                "details": "Tentativa de acesso cruzado.",
+            },
+        )
+
+        self.assertEqual(response.status_code, 404)
+
+        other_alert.refresh_from_db()
+        self.assertEqual(other_alert.status, "OPEN")
+        self.assertFalse(
+            other_alert.audit_history.filter(
+                action="ACKNOWLEDGED"
+            ).exists()
+        )
+
+    def test_editor_pode_reconhecer_alerta_da_sua_empresa(self):
+        alert = self.create_alert()
+
+        self.client.force_login(self.editor)
+
+        response = self.client.post(
+            reverse(
+                "facilities:monitoring_alert_action",
+                args=[alert.pk],
+            ),
+            {
+                "action": "acknowledge",
+                "details": "Alerta analisado pelo editor da empresa.",
+            },
+        )
+
+        self.assertEqual(response.status_code, 302)
+
+        alert.refresh_from_db()
+        self.assertEqual(alert.status, "ACKNOWLEDGED")
+        self.assertTrue(
+            alert.audit_history.filter(
+                action="ACKNOWLEDGED",
+                performed_by=self.editor,
+            ).exists()
         )

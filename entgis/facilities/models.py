@@ -1715,3 +1715,59 @@ class LifecycleSubmissionLog(models.Model):
             f"{self.submission} | {self.get_action_display()} | "
             f"{self.performed_at}"
         )
+
+
+# ============================================================
+# ENT-GIS — HISTÓRICO AUDITÁVEL DOS ALERTAS DE MONITORIZAÇÃO
+# ============================================================
+
+class MonitoringAlertLog(models.Model):
+    objects = models.Manager.from_queryset(ImmutableAuditQuerySet)()
+
+    ACTION_CHOICES = [
+        ("CREATED", "Alerta criado"),
+        ("ACKNOWLEDGED", "Alerta reconhecido"),
+        ("ASSIGNED", "Responsável atribuído ou alterado"),
+        ("ACTION_RECORDED", "Intervenção registada"),
+        ("CLOSED", "Alerta encerrado"),
+    ]
+
+    alert = models.ForeignKey(
+        MonitoringAlert,
+        on_delete=models.PROTECT,
+        related_name="audit_history",
+    )
+    action = models.CharField(max_length=24, choices=ACTION_CHOICES)
+    status_before = models.CharField(max_length=15, blank=True)
+    status_after = models.CharField(max_length=15, blank=True)
+    responsible_before = models.CharField(max_length=180, blank=True)
+    responsible_after = models.CharField(max_length=180, blank=True)
+    performed_by = models.ForeignKey(
+        "auth.User",
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name="entgis_monitoring_alert_actions",
+    )
+    performed_at = models.DateTimeField(auto_now_add=True)
+    details = models.TextField()
+
+    class Meta:
+        ordering = ["-performed_at", "-pk"]
+        verbose_name = "Histórico de alerta de monitorização"
+        verbose_name_plural = "Históricos de alertas de monitorização"
+
+    def save(self, *args, **kwargs):
+        if not self._state.adding:
+            raise ValidationError(
+                "Os registos de auditoria dos alertas são imutáveis."
+            )
+        return super().save(*args, **kwargs)
+
+    def delete(self, *args, **kwargs):
+        raise ValidationError(
+            "Os registos de auditoria dos alertas não podem ser eliminados."
+        )
+
+    def __str__(self):
+        return f"Alerta {self.alert_id} | {self.get_action_display()}"

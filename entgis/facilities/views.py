@@ -7,6 +7,7 @@ from pathlib import Path
 
 from django.shortcuts import render
 from django.contrib.auth.decorators import login_required
+from django.views.decorators.http import require_POST
 
 from .models import MiningCompany, TailingsFacility
 
@@ -49,15 +50,180 @@ def home(request):
     return render(request, "facilities/home.html")
 
 
+def _authorized_facilities_for_user(user):
+    """
+    Fonte comum de autorização para consulta de instalações.
+    ENDIAMA: acesso nacional.
+    Empresas: apenas instalações das empresas com vínculo activo.
+    """
+    from django.core.exceptions import PermissionDenied
+    from facilities.models import MiningCompanyUser
 
+    if user.is_staff:
+        return TailingsFacility.objects.select_related("company").all()
+
+    company_ids = MiningCompanyUser.objects.filter(
+        user=user,
+        is_active=True,
+    ).values_list("company_id", flat=True)
+
+    facilities = TailingsFacility.objects.filter(
+        company_id__in=company_ids
+    ).select_related("company")
+
+    # Uma empresa com vínculo activo pode ainda não ter instalações.
+    # Nesse caso, devolvemos uma lista vazia, sem bloquear o acesso
+    # ao módulo de registo da primeira instalação.
+    return facilities
+
+
+@login_required(login_url="/accounts/login/")
+def access_hub(request):
+    if request.user.is_staff:
+        links = [{
+            "title": "Administração de utilizadores e acessos",
+            "description": "Gerir contas, empresas, perfis e permissões.",
+            "url": "/admin/",
+        }]
+    else:
+        links = [{
+            "title": "Portal da empresa",
+            "description": "Consultar as instalações e os processos autorizados.",
+            "url": "/portal/empresa/",
+        }]
+
+    return render(request, "facilities/section_hub.html", {
+        "hub_title": "Administração de Utilizadores e Acessos",
+        "hub_description": (
+            "Gestão de contas, vínculos empresariais, perfis e permissões "
+            "de acesso ao ENT-GIS."
+        ),
+        "hub_links": links,
+        "hub_note": (
+            "A gestão administrativa de contas é efectuada através do "
+            "módulo de administração existente."
+        ),
+    })
+
+
+@login_required(login_url="/accounts/login/")
+def installations_hub(request):
+    facilities = _authorized_facilities_for_user(request.user)
+
+    links = [{
+        "title": "Mapa geográfico",
+        "description": "Consultar a localização das instalações autorizadas.",
+        "url": "/mapa/",
+    }]
+
+    if request.user.is_staff:
+        links.append({
+            "title": "Processos submetidos pelas empresas",
+            "description": "Analisar e validar os processos de ciclo de vida.",
+            "url": "/endiama/processos/",
+        })
+    else:
+        links.append({
+            "title": "Portal da empresa",
+            "description": "Registar e acompanhar os processos das instalações.",
+            "url": "/portal/empresa/",
+        })
+
+    return render(request, "facilities/section_hub.html", {
+        "hub_title": "Registo e Gestão de Instalações",
+        "hub_description": (
+            "Consulta das instalações autorizadas e acesso aos respectivos "
+            "processos, fases do ciclo de vida e informação técnica."
+        ),
+        "hub_links": links,
+        "facilities": facilities.order_by("province", "name"),
+        "hub_note": (
+            "Cada instalação mantém o seu próprio registo e histórico. "
+            "Os dados técnicos devem ser consultados no contexto da "
+            "instalação correspondente."
+        ),
+    })
+
+
+@login_required(login_url="/accounts/login/")
+def reports_hub(request):
+    links = [
+        {
+            "title": "Monitorização",
+            "description": "Consultar leituras, alertas e histórico.",
+            "url": "/monitorizacao/",
+        },
+        {
+            "title": "Eventos e alertas TARP",
+            "description": "Consultar eventos, níveis de alerta e acções.",
+            "url": "/tarp/eventos/",
+        },
+        {
+            "title": "Indicadores GISTM",
+            "description": "Consultar conformidade e cobertura da avaliação.",
+            "url": "/compliance/",
+        },
+    ]
+
+    if request.user.is_staff:
+        links.append({
+            "title": "Processos das empresas",
+            "description": "Consultar processos submetidos e respectivas decisões.",
+            "url": "/endiama/processos/",
+        })
+
+    return render(request, "facilities/section_hub.html", {
+        "hub_title": "Relatórios",
+        "hub_description": (
+            "Acesso aos dados e indicadores existentes para acompanhamento "
+            "individual das instalações e supervisão nacional."
+        ),
+        "hub_links": links,
+        "hub_note": (
+            "Os relatórios mensais, trimestrais, semestrais e anuais "
+            "consolidados e o circuito de submissão mensal de dia 1 a 5 "
+            "ainda necessitam de implementação própria. Esta página "
+            "não representa a existência de um módulo de relatórios "
+            "periódicos já concluído."
+        ),
+    })
+
+
+@login_required(login_url="/accounts/login/")
+def maturity_hub(request):
+    return render(request, "facilities/section_hub.html", {
+        "hub_title": "Maturidade GISTM",
+        "hub_description": (
+            "Acompanhamento da avaliação dos temas, princípios e requisitos "
+            "GISTM por instalação."
+        ),
+        "hub_links": [{
+            "title": "Avaliação GISTM por instalação",
+            "description": (
+                "Consultar avaliações, conformidade, cobertura, evidências "
+                "e acções correctivas."
+            ),
+            "url": "/compliance/",
+        }],
+        "hub_note": (
+            "O módulo existente apresenta indicadores de conformidade "
+            "e cobertura dos requisitos avaliados. Estes indicadores não "
+            "constituem, por si só, uma classificação formal de maturidade, "
+            "uma avaliação de segurança física ou uma certificação GISTM."
+        ),
+    })
+
+
+
+@login_required(login_url="/accounts/login/")
 def national_map(request):
     province = request.GET.get("province", "").strip()
     municipality = request.GET.get("municipality", "").strip()
     company_id = request.GET.get("company", "").strip()
 
-    facilities = TailingsFacility.objects.select_related(
-        "company"
-    ).filter(
+    authorized_facilities = _authorized_facilities_for_user(request.user)
+
+    facilities = authorized_facilities.filter(
         latitude__isnull=False,
         longitude__isnull=False
     )
@@ -103,7 +269,7 @@ def national_map(request):
             "is_simulated": facility.is_simulated,
         })
 
-    municipalities_query = TailingsFacility.objects.exclude(
+    municipalities_query = authorized_facilities.exclude(
         municipality=""
     ).exclude(
         municipality__isnull=True
@@ -119,8 +285,9 @@ def national_map(request):
     ).distinct().order_by("municipality")
 
     companies = MiningCompany.objects.filter(
-        is_active=True
-    ).order_by("name")
+        is_active=True,
+        pk__in=authorized_facilities.values("company_id"),
+    ).distinct().order_by("name")
 
     context = {
         "map_data": map_data,
@@ -136,12 +303,13 @@ def national_map(request):
     return render(request, "facilities/map.html", context)
 
 
+@login_required(login_url="/accounts/login/")
 def module_page(request, section):
     """
     Páginas independentes de análise do ENT-GIS.
     Utiliza os modelos e dados já existentes.
     """
-    facilities = TailingsFacility.objects.all()
+    facilities = _authorized_facilities_for_user(request.user)
 
     if section == "territorio":
         province_names = get_province_names()
@@ -294,8 +462,81 @@ def _monitoring_facilities_for_user(user):
 
 
 @login_required
+@require_POST
+def monitoring_alert_action(request, alert_id):
+    from django.core.exceptions import PermissionDenied, ValidationError
+    from django.shortcuts import get_object_or_404, redirect
+    from django.contrib import messages
+    from facilities.models import MonitoringAlert, MiningCompanyUser
+    from facilities.services.monitoring_alerts import (
+        acknowledge_monitoring_alert,
+        assign_monitoring_alert,
+        record_monitoring_alert_action,
+        close_monitoring_alert,
+    )
+
+    user = request.user
+
+    if user.is_staff:
+        allowed_alerts = MonitoringAlert.objects.all()
+    else:
+        memberships = MiningCompanyUser.objects.filter(
+            user=user,
+            is_active=True,
+            role__in=["COMPANY_ADMIN", "COMPANY_EDITOR"],
+        )
+        company_ids = memberships.values_list("company_id", flat=True)
+
+        if not company_ids.exists():
+            raise PermissionDenied(
+                "Não tem autorização para gerir alertas."
+            )
+
+        allowed_alerts = MonitoringAlert.objects.filter(
+            reading__facility__company_id__in=company_ids
+        )
+
+    alert = get_object_or_404(allowed_alerts, pk=alert_id)
+
+    action = request.POST.get("action", "").strip()
+    details = request.POST.get("details", "").strip()
+    responsible = request.POST.get("responsible", "").strip()
+
+    try:
+        if action == "acknowledge":
+            acknowledge_monitoring_alert(alert, user, details)
+
+        elif action == "assign":
+            assign_monitoring_alert(
+                alert, user, responsible, details
+            )
+
+        elif action == "record_action":
+            record_monitoring_alert_action(alert, user, details)
+
+        elif action == "close":
+            close_monitoring_alert(alert, user, details)
+
+        else:
+            messages.error(request, "Acção de alerta inválida.")
+            return redirect("facilities:monitoring_dashboard")
+
+    except ValidationError as exc:
+        messages.error(request, " ".join(exc.messages))
+        return redirect("facilities:monitoring_dashboard")
+
+    messages.success(
+        request,
+        "Acção registada no histórico auditável do alerta.",
+    )
+    return redirect("facilities:monitoring_dashboard")
+
+
+@login_required
 def monitoring_dashboard(request):
-    from facilities.models import MonitoringReading, MonitoringAlert
+    from facilities.models import (
+        MonitoringReading, MonitoringAlert, MiningCompanyUser
+    )
 
     allowed_facilities = _monitoring_facilities_for_user(request.user)
 
@@ -307,14 +548,30 @@ def monitoring_dashboard(request):
 
     alerts = MonitoringAlert.objects.filter(
         reading__facility__in=allowed_facilities,
-        status="OPEN",
+        status__in=["OPEN", "ACKNOWLEDGED"],
     ).select_related(
         "reading", "reading__facility", "reading__parameter"
-    )
+    ).prefetch_related(
+        "audit_history__performed_by"
+    ).order_by("-created_at")
+
+    if request.user.is_staff:
+        can_manage_alerts = True
+    else:
+        can_manage_alerts = MiningCompanyUser.objects.filter(
+            user=request.user,
+            is_active=True,
+            role__in=["COMPANY_ADMIN", "COMPANY_EDITOR"],
+        ).exists()
 
     context = {
         "total_readings": readings.count(),
-        "open_alerts": alerts.count(),
+        "open_alerts": alerts.filter(status="OPEN").count(),
+        "acknowledged_alerts": alerts.filter(
+            status="ACKNOWLEDGED"
+        ).count(),
+        "total_pending_alerts": alerts.count(),
+        "can_manage_alerts": can_manage_alerts,
         "unconfigured": readings.filter(
             interpretation__in=["NOT_CONFIGURED", "NOT_EFFECTIVE"]
         ).count(),
@@ -322,7 +579,7 @@ def monitoring_dashboard(request):
         "orange_count": readings.filter(interpretation="ORANGE").count(),
         "yellow_count": readings.filter(interpretation="YELLOW").count(),
         "latest_readings": readings[:15],
-        "open_alert_list": alerts[:10],
+        "open_alert_list": alerts[:20],
     }
 
     return render(
@@ -330,7 +587,6 @@ def monitoring_dashboard(request):
         "facilities/monitoring_dashboard.html",
         context,
     )
-
 
 
 
@@ -493,7 +749,7 @@ def monitoring_history(request):
 
 
 
-@login_required(login_url="/admin/login/")
+@login_required(login_url="/accounts/login/")
 @staff_member_required(login_url="/admin/login/")
 def monitoring_criterion_entry(request):
     from django.contrib import messages
@@ -538,7 +794,7 @@ def _criterion_editable_facilities(user):
     return TailingsFacility.objects.filter(company_id__in=company_ids)
 
 
-@login_required(login_url="/admin/login/")
+@login_required(login_url="/accounts/login/")
 def monitoring_criterion_edit(request, criterion_id):
     from django.contrib import messages
     from django.core.exceptions import PermissionDenied, ValidationError
@@ -593,7 +849,7 @@ def monitoring_criterion_edit(request, criterion_id):
     )
 
 
-@login_required(login_url="/admin/login/")
+@login_required(login_url="/accounts/login/")
 def monitoring_criterion_retire(request, criterion_id):
     from django.contrib import messages
     from django.core.exceptions import PermissionDenied, ValidationError
@@ -634,7 +890,7 @@ def monitoring_criterion_retire(request, criterion_id):
     return redirect("facilities:monitoring_criteria_list")
 
 
-@login_required(login_url="/admin/login/")
+@login_required(login_url="/accounts/login/")
 def monitoring_criteria_list(request):
     from facilities.models import (
         MonitoringCriterion,
@@ -695,7 +951,7 @@ def monitoring_criteria_list(request):
     )
 
 
-@login_required(login_url="/admin/login/")
+@login_required(login_url="/accounts/login/")
 def monitoring_criterion_submit(request, criterion_id):
     from django.contrib import messages
     from django.core.exceptions import PermissionDenied, ValidationError
@@ -743,7 +999,7 @@ def monitoring_criterion_submit(request, criterion_id):
     return redirect("facilities:monitoring_criteria_list")
 
 
-@login_required(login_url="/admin/login/")
+@login_required(login_url="/accounts/login/")
 def monitoring_criterion_decide(request, criterion_id):
     from django.contrib import messages
     from django.core.exceptions import PermissionDenied, ValidationError
@@ -795,7 +1051,7 @@ def monitoring_criterion_decide(request, criterion_id):
 # ENT-GIS | PAINEL NACIONAL E INDIVIDUAL DE COMPLIANCE GISTM
 # ==========================================================
 
-@login_required(login_url="/admin/login/")
+@login_required(login_url="/accounts/login/")
 def compliance_dashboard(request):
     from django.db.models import Count
     from facilities.models import TailingsFacility, GISTMAssessment, GISTMRequirement
@@ -808,7 +1064,9 @@ def compliance_dashboard(request):
     )}
     evaluated_total = applicable_total = 0
 
-    for facility in TailingsFacility.objects.select_related("company").order_by("province", "name"):
+    authorized_facilities = _authorized_facilities_for_user(request.user)
+
+    for facility in authorized_facilities.order_by("province", "name"):
         assessment = GISTMAssessment.objects.filter(
             facility=facility
         ).order_by("-version").first()
@@ -860,7 +1118,7 @@ def compliance_dashboard(request):
     })
 
 
-@login_required(login_url="/admin/login/")
+@login_required(login_url="/accounts/login/")
 def compliance_facility(request, facility_id):
     from django.shortcuts import get_object_or_404
     from facilities.models import (
@@ -868,8 +1126,9 @@ def compliance_facility(request, facility_id):
         GISTMRequirementAssessment,
     )
 
+    authorized_facilities = _authorized_facilities_for_user(request.user)
     facility = get_object_or_404(
-        TailingsFacility.objects.select_related("company"), pk=facility_id
+        authorized_facilities, pk=facility_id
     )
     assessment = GISTMAssessment.objects.filter(
         facility=facility

@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ENT-GIS | {{ hub_title }}</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#f2f5f3;color:#20342a;font-family:Arial,sans-serif}
+header{background:#103d2b;color:white;padding:22px 6%;display:flex;justify-content:space-between;gap:15px;align-items:center}
+header strong{font-size:20px;letter-spacing:1px}
+header a{color:white;text-decoration:none;font-size:13px}
+main{max-width:1150px;margin:35px auto;padding:0 22px}
+h1{font-size:27px;margin-bottom:10px}
+.intro{color:#64756a;line-height:1.7;margin-bottom:28px}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:16px}
+.card{background:white;border:1px solid #dce5df;border-radius:11px;padding:21px;text-decoration:none;color:#20342a}
+.card:hover{border-color:#278057;box-shadow:0 5px 18px #183d2812}
+.card h2{font-size:16px;margin:0 0 9px}
+.card p{font-size:13px;color:#65766b;line-height:1.6;margin:0}
+.panel{background:white;border:1px solid #dce5df;border-radius:11px;padding:20px;margin-top:25px}
+.panel h2{font-size:17px;margin-top:0}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th,td{text-align:left;padding:12px 9px;border-bottom:1px solid #e8eee9}
+th{color:#64756a}
+.note{margin-top:22px;padding:16px;background:#edf4ef;border-left:4px solid #278057;border-radius:5px;font-size:13px;line-height:1.7}
+.back{display:inline-block;margin-top:24px;color:#17613d;text-decoration:none;font-size:13px}
+footer{margin-top:45px;padding:20px;text-align:center;color:#738178;font-size:11px}
+@media(max-width:600px){header{padding:18px}main{margin-top:25px}h1{font-size:23px}table{font-size:11px}}
+</style>
+</head>
+<body>
+<header>
+<strong>ENDIAMA | ENT-GIS</strong>
+<a href="/">← Página inicial</a>
+</header>
+<main>
+<h1>{{ hub_title }}</h1>
+<p class="intro">{{ hub_description }}</p>
+
+<section class="cards">
+{% for item in hub_links %}
+<a class="card" href="{{ item.url }}">
+<h2>{{ item.title }}</h2>
+<p>{{ item.description }}</p>
+</a>
+{% endfor %}
+</section>
+
+{% if facilities %}
+<section class="panel">
+<h2>Instalações autorizadas</h2>
+<table>
+<thead><tr><th>Instalação</th><th>Empresa</th><th>Província</th><th>Fase</th><th>Consulta</th></tr></thead>
+<tbody>
+{% for facility in facilities %}
+<tr>
+<td>{{ facility.name }}</td>
+<td>{{ facility.company.name }}</td>
+<td>{{ facility.province|default:"—" }}</td>
+<td>{{ facility.get_lifecycle_stage_display|default:facility.lifecycle_stage|default:"—" }}</td>
+<td><a href="/compliance/barragem/{{ facility.id }}/">Abrir registo</a></td>
+</tr>
+{% endfor %}
+</tbody>
+</table>
+</section>
+{% endif %}
+
+{% if hub_note %}
+<div class="note">{{ hub_note }}</div>
+{% endif %}
+
+<a class="back" href="/">← Voltar ao painel institucional</a>
+</main>
+<footer>ENDIAMA EP | ENT-GIS | Plataforma nacional de gestão de informação</footer>
+</body>
+</html>

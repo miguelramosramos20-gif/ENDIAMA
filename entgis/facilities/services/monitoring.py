@@ -1,6 +1,9 @@
+from django.db import transaction
+
 from facilities.models import (
     MonitoringCriterion,
     MonitoringAlert,
+    MonitoringAlertLog,
 )
 
 
@@ -64,16 +67,33 @@ def interpret_reading(reading):
     return reading.interpretation
 
 
+@transaction.atomic
 def create_monitoring_alert(reading):
     """
     Cria o alerta depois de a leitura estar gravada.
-    Nunca altera a leitura original.
+    Regista a criação uma única vez e nunca altera a leitura original.
     """
     if reading.interpretation not in ("YELLOW", "ORANGE", "RED"):
         return None
 
-    alert, _ = MonitoringAlert.objects.get_or_create(
+    alert, created = MonitoringAlert.objects.get_or_create(
         reading=reading,
         defaults={"severity": reading.interpretation},
     )
+
+    if created:
+        MonitoringAlertLog.objects.create(
+            alert=alert,
+            action="CREATED",
+            status_before="",
+            status_after=alert.status,
+            responsible_before="",
+            responsible_after=alert.responsible,
+            performed_by=reading.entered_by,
+            details=(
+                "Alerta criado automaticamente após a interpretação "
+                f"da leitura. Nível: {alert.severity}."
+            ),
+        )
+
     return alert

@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Entrar | ENT-GIS</title>
+    <style>
+        * { box-sizing: border-box; }
+        body {
+            margin: 0;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #edf2ef;
+            font-family: Arial, sans-serif;
+            color: #26352d;
+        }
+        .login-card {
+            width: 100%;
+            max-width: 420px;
+            margin: 20px;
+            padding: 36px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 8px 30px rgba(0,0,0,.09);
+        }
+        .header {
+            margin: -36px -36px 28px;
+            padding: 28px 36px;
+            background: #123f2b;
+            color: white;
+            border-radius: 12px 12px 0 0;
+        }
+        h1 { margin: 0 0 8px; font-size: 25px; }
+        .subtitle { margin: 0; font-size: 13px; opacity: .85; }
+        label { display: block; margin: 18px 0 7px; font-weight: bold; }
+        input[type="text"], input[type="password"] {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ccd5ce;
+            border-radius: 6px;
+            font-size: 15px;
+        }
+        button {
+            width: 100%;
+            margin-top: 24px;
+            padding: 13px;
+            border: 0;
+            border-radius: 6px;
+            background: #176b43;
+            color: white;
+            font-size: 15px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        button:hover { background: #105333; }
+        .error { color: #a32626; margin-top: 12px; }
+        .footer {
+            margin-top: 25px;
+            text-align: center;
+            color: #68766d;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <main class="login-card">
+        <header class="header">
+            <h1>ENT-GIS</h1>
+            <p class="subtitle">Sistema Nacional de Informação e Gestão de Barragens de Rejeitados</p>
+        </header>
+
+        <h2>Iniciar sessão</h2>
+        <p>Introduza as suas credenciais de acesso.</p>
+
+        {% if form.errors %}
+            <p class="error">Utilizador ou palavra-passe incorrectos. Verifique os seus dados.</p>
+        {% endif %}
+
+        {% if next %}
+            {% if user.is_authenticated %}
+                <p class="error">A sua conta não tem autorização para aceder a esta página.</p>
+            {% endif %}
+        {% endif %}
+
+        <form method="post">
+            {% csrf_token %}
+            <input type="hidden" name="next" value="{{ next }}">
+
+            <label for="id_username">Utilizador</label>
+            <input type="text" name="username" id="id_username"
+                   autocomplete="username" required autofocus>
+
+            <label for="id_password">Palavra-passe</label>
+            <input type="password" name="password" id="id_password"
+                   autocomplete="current-password" required>
+
+            <button type="submit">Entrar no ENT-GIS</button>
+        </form>
+
+        <div class="footer">
+            ENDIAMA EP · Plataforma Nacional ENT-GIS
+        </div>
+    </main>
+</body>
+</html>

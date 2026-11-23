@@ -61,25 +61,97 @@ th{background:#f8fafc}
       </tbody>
     </table>
   </section>
-  <section class="panel" style="margin-top:20px">
-    <h2>Alertas por tratar</h2>
-    <table>
-      <thead><tr><th>Data</th><th>Instalação</th><th>Variável</th><th>Nível</th><th>Estado</th></tr></thead>
-      <tbody>
-      {% for a in open_alert_list %}
-        <tr>
-          <td>{{ a.created_at|date:"d/m/Y H:i" }}</td>
-          <td>{{ a.reading.facility.name }}</td>
-          <td>{{ a.reading.parameter.name }}</td>
-          <td>{{ a.get_severity_display|default:a.severity }}</td>
-          <td>{{ a.get_status_display }}</td>
-        </tr>
-      {% empty %}
-        <tr><td colspan="5">Não existem alertas abertos.</td></tr>
-      {% endfor %}
-      </tbody>
-    </table>
+
+  <section class="grid">
+    <div class="card">Alertas abertos<div class="number">{{ open_alerts }}</div></div>
+    <div class="card">Alertas reconhecidos<div class="number">{{ acknowledged_alerts }}</div></div>
+    <div class="card">Total pendente<div class="number">{{ total_pending_alerts }}</div></div>
   </section>
+
+  <section class="panel" style="margin-top:20px">
+    <h2>Gestão de alertas de monitorização</h2>
+    <p class="muted">Os alertas permanecem nesta lista até ao seu encerramento. Todas as intervenções ficam associadas ao utilizador, data e estado do alerta.</p>
+
+    {% for a in open_alert_list %}
+      <article style="border:1px solid #dbe3ec;border-radius:10px;padding:16px;margin:14px 0">
+        <h3>{{ a.reading.facility.name }} — {{ a.reading.parameter.name }}</h3>
+        <p>
+          <strong>Nível:</strong> {{ a.severity }}
+          &nbsp; <strong>Estado:</strong> {{ a.get_status_display }}
+          &nbsp; <strong>Data:</strong> {{ a.created_at|date:"d/m/Y H:i" }}
+        </p>
+        <p>
+          <strong>Responsável:</strong>
+          {{ a.responsible|default:"Ainda não atribuído" }}
+        </p>
+        {% if a.action_taken %}
+          <p><strong>Intervenções registadas:</strong><br>{{ a.action_taken|linebreaksbr }}</p>
+        {% endif %}
+
+        {% if can_manage_alerts %}
+          <details style="margin:12px 0">
+            <summary style="cursor:pointer;font-weight:bold">Gerir este alerta</summary>
+
+            {% if a.status == "OPEN" %}
+              <form method="post" action="{% url 'facilities:monitoring_alert_action' a.id %}" style="margin-top:14px">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="acknowledge">
+                <label>Justificação do reconhecimento</label>
+                <textarea name="details" required rows="2" style="width:100%;box-sizing:border-box"></textarea>
+                <button type="submit">Reconhecer alerta</button>
+              </form>
+            {% endif %}
+
+            <form method="post" action="{% url 'facilities:monitoring_alert_action' a.id %}" style="margin-top:14px">
+              {% csrf_token %}
+              <input type="hidden" name="action" value="assign">
+              <label>Responsável</label>
+              <input name="responsible" maxlength="180" required style="width:100%;box-sizing:border-box">
+              <label>Justificação da atribuição</label>
+              <textarea name="details" required rows="2" style="width:100%;box-sizing:border-box"></textarea>
+              <button type="submit">Atribuir responsável</button>
+            </form>
+
+            {% if a.status == "ACKNOWLEDGED" %}
+              <form method="post" action="{% url 'facilities:monitoring_alert_action' a.id %}" style="margin-top:14px">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="record_action">
+                <label>Intervenção efectuada</label>
+                <textarea name="details" required rows="3" style="width:100%;box-sizing:border-box"></textarea>
+                <button type="submit">Registar intervenção</button>
+              </form>
+
+              <form method="post" action="{% url 'facilities:monitoring_alert_action' a.id %}" style="margin-top:14px">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="close">
+                <label>Justificação do encerramento</label>
+                <textarea name="details" required rows="3" style="width:100%;box-sizing:border-box"></textarea>
+                <button type="submit">Encerrar alerta</button>
+              </form>
+            {% endif %}
+          </details>
+        {% endif %}
+
+        <details style="margin-top:12px">
+          <summary style="cursor:pointer;font-weight:bold">Histórico de auditoria</summary>
+          {% for log in a.audit_history.all %}
+            <div style="border-top:1px solid #e2e8f0;padding:10px 0">
+              <strong>{{ log.get_action_display }}</strong>
+              — {{ log.performed_at|date:"d/m/Y H:i" }}
+              — {{ log.performed_by|default:"Sistema" }}
+              <p>{{ log.details }}</p>
+              <small>Estado: {{ log.status_before|default:"—" }} → {{ log.status_after|default:"—" }}</small>
+            </div>
+          {% empty %}
+            <p class="muted">Não existe histórico registado para este alerta.</p>
+          {% endfor %}
+        </details>
+      </article>
+    {% empty %}
+      <p>Não existem alertas pendentes de tratamento.</p>
+    {% endfor %}
+  </section>
+
 </main>
 </body>
 </html>

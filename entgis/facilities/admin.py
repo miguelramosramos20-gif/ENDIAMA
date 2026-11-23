@@ -227,3 +227,65 @@ for model, model_admin in (
         admin.site.register(model, model_admin)
     except AlreadyRegistered:
         pass
+
+
+# ENT-GIS | Administração nacional dos acessos às sociedades mineiras
+from .models import MiningCompanyUser
+
+
+@admin.register(MiningCompanyUser)
+class MiningCompanyUserAdmin(admin.ModelAdmin):
+    list_display = (
+        "user",
+        "company",
+        "role",
+        "is_active",
+        "created_at",
+    )
+
+    list_filter = (
+        "company",
+        "role",
+        "is_active",
+    )
+
+    search_fields = (
+        "user__username",
+        "user__first_name",
+        "user__last_name",
+        "user__email",
+        "company__name",
+    )
+
+    autocomplete_fields = (
+        "user",
+        "company",
+    )
+
+    readonly_fields = ("created_at",)
+
+    list_select_related = ("user", "company")
+
+    ordering = ("company__name", "user__username")
+
+
+# ENT-GIS — Histórico imutável dos alertas de monitorização
+from .models import MonitoringAlertLog
+
+
+class MonitoringAlertLogAdmin(ReadOnlyAuditAdmin):
+    list_display = (
+        "alert", "action", "status_before", "status_after",
+        "performed_by", "performed_at",
+    )
+    list_filter = ("action", "status_after", "performed_at")
+    search_fields = (
+        "alert__reading__facility__name",
+        "alert__reading__parameter__name",
+        "performed_by__username",
+        "details",
+    )
+    date_hierarchy = "performed_at"
+
+
+admin.site.register(MonitoringAlertLog, MonitoringAlertLogAdmin)

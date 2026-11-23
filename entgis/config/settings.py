@@ -149,3 +149,7 @@ MAILERS = {
 # ENT-GIS — armazenamento privado de documentos.
 # Não configurar MEDIA_URL nem servir estes ficheiros publicamente.
 MEDIA_ROOT = BASE_DIR / "private_media"
+
+LOGIN_URL = "/accounts/login/"
+LOGIN_REDIRECT_URL = "/"
+LOGOUT_REDIRECT_URL = "/"

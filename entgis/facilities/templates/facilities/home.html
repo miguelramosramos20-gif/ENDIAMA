@@ -353,67 +353,35 @@
         </p>
 
         <div class="menu-grid">
-            <a class="menu-card" href="{% url 'facilities:national_map' %}">
-                <span class="menu-icon">🌍</span>
+            <a class="menu-card" href="{% url 'facilities:access_hub' %}">
+                <span class="menu-icon">🔐</span>
                 <span>
-                    <strong>Sistema Geográfico</strong>
-                    <small>Localização e distribuição territorial</small>
+                    <strong>Administração de Utilizadores e Acessos</strong>
+                    <small>Contas, empresas, perfis e permissões</small>
                 </span>
             </a>
 
-            <a class="menu-card" href="{% url 'facilities:territorio' %}">
-                <span class="menu-icon">📍</span>
-                <span>
-                    <strong>Gestão Territorial</strong>
-                    <small>Informação territorial</small>
-                </span>
-            </a>
-
-            <a class="menu-card" href="{% url 'facilities:monitoring_dashboard' %}">
-                <span class="menu-icon">📈</span>
-                <span>
-                    <strong>Monitorização</strong>
-                    <small>Dados, leituras e interpretação</small>
-                </span>
-            </a>
-
-            <a class="menu-card" href="{% url 'facilities:tarp_events_dashboard' %}">
-                <span class="menu-icon">🛡️</span>
-                <span>
-                    <strong>Segurança e TARP</strong>
-                    <small>Alertas, eventos e respostas</small>
-                </span>
-            </a>
-
-            <a class="menu-card" href="{% url 'facilities:compliance_dashboard' %}">
-                <span class="menu-icon">✓</span>
-                <span>
-                    <strong>Conformidade GISTM</strong>
-                    <small>Requisitos e avaliações</small>
-                </span>
-            </a>
-
-            <a class="menu-card" href="{% url 'facilities:seguranca' %}">
+            <a class="menu-card" href="{% url 'facilities:installations_hub' %}">
                 <span class="menu-icon">🏗️</span>
                 <span>
-                    <strong>Gestão de Segurança</strong>
-                    <small>Área de segurança das instalações</small>
+                    <strong>Registo e Gestão de Instalações</strong>
+                    <small>Cadastro, processos e ciclo de vida</small>
                 </span>
             </a>
 
-            <a class="menu-card" href="{% url 'facilities:operacoes' %}">
-                <span class="menu-icon">⚙️</span>
+            <a class="menu-card" href="{% url 'facilities:reports_hub' %}">
+                <span class="menu-icon">📊</span>
                 <span>
-                    <strong>Operações</strong>
-                    <small>Gestão operacional</small>
+                    <strong>Relatórios</strong>
+                    <small>Monitorização, TARP e informação técnica</small>
                 </span>
             </a>
 
-            <a class="menu-card" href="/admin/">
-                <span class="menu-icon">🏢</span>
+            <a class="menu-card" href="{% url 'facilities:maturity_hub' %}">
+                <span class="menu-icon">📋</span>
                 <span>
-                    <strong>Administração</strong>
-                    <small>Registos, empresas e gestão do sistema</small>
+                    <strong>Maturidade GISTM</strong>
+                    <small>Avaliação dos temas, princípios e requisitos</small>
                 </span>
             </a>
         </div>
